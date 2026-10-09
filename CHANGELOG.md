@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 (2026-10-09)
+
 - Docs site built with Blume under `docs/`, deployed to GitHub Pages,
   with a guide on when to reach for factory that sizes a change as
   small, medium, or large, and one page per skill.

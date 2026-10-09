@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "factory",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Software factory loop for coding agents: spec, plan, implement, simplify, verify, pr, review. Vendors upstream skills and wires in poly-crap and lawbook.",
   "author": {
     "name": "Drew Simmons",
