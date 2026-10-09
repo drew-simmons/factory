@@ -42,7 +42,7 @@ run_claude() {
     cd "$WORK" || exit 2
     # shellcheck disable=SC2086
     claude -p --plugin-dir "$FACTORY" --permission-mode acceptEdits --permission-prompts none \
-      --allowedTools "$ALLOWED" --output-format json --max-budget-usd "$budget" \
+      --allowedTools "$ALLOWED" --add-dir "$FACTORY" --output-format json --max-budget-usd "$budget" \
       ${MODEL:+--model "$MODEL"} "$@"
   ) >"$out" 2>"$RESULTS/$name.stderr"
   rc=$?
@@ -101,6 +101,9 @@ green_matches() {
   in_work sh "$FACTORY/skills/verify/scripts/verify.sh" >/dev/null 2>&1
 }
 pr_count() { in_work gh pr list --state all --json number --jq length; }
+# PRs opened since the run started; the throwaway repo may hold earlier runs.
+PR0=0
+pr_new() { echo $(($(pr_count) - PR0)); }
 pr_field() { in_work gh pr list --head "$1" --state all --json "$2" --jq ".[0].$2"; }
 issue_count() { in_work gh issue list --label factory --state all --json number --jq length; }
 waves_valid() {

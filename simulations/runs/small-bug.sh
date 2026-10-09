@@ -12,6 +12,7 @@ VERIFY="$FACTORY/skills/verify/scripts/verify.sh"
 sh "$SIM/fixtures/ledger/scaffold.sh" "$WORK" "$REPO" || exit 2
 cd "$WORK" || exit 2
 BASE_SHA=$(git rev-parse HEAD)
+PR0=$(pr_count)
 
 stage setup "/factory:setup. I invoked this on purpose. Keep every value already in factory.toml; for anything you would otherwise ask me, take your own recommended answer and continue."
 check setup "factory.toml keeps the github tracker" file_has factory.toml '^kind = "github"'
@@ -37,7 +38,7 @@ check plan "plan has a valid waves block" waves_valid "${PLAN:-/dev/null}"
 check plan "every slice has a Branch and a Parent" sh -c "[ \$(grep -c '^- Branch: ' '$PLAN') -ge 1 ] && [ \$(grep -c '^- Branch: ' '$PLAN') -eq \$(grep -c '^- Parent: ' '$PLAN') ]"
 check plan "every slice has a Tracker url" sh -c "[ \$(grep -Ec '^- Tracker: <?https://github.com/' '$PLAN') -eq \$(grep -c '^- Branch: ' '$PLAN') ]"
 check plan "a tracking issue and one issue per slice carry the factory label" sh -c "[ \$(cd '$WORK' && gh issue list --label factory --state all --json number --jq length) -ge 2 ]"
-check plan "no PR was opened by planning" test "$(pr_count)" = 0
+check plan "no PR was opened by planning" test "$(pr_new)" = 0
 BRANCH=$(slice_branch 01)
 PARENT=$(slice_parent 01)
 
@@ -52,7 +53,7 @@ check implement "a test file changed" sh -c "git diff --name-only '$BASE_SHA' --
 check implement "the fix landed in money.py" sh -c "git diff '$BASE_SHA' -- src/ledger/money.py | grep -q '^+.*ROUND_HALF_UP'"
 check implement "verify stamped the tree green" green_matches
 check implement "the Stop hook ran and disarmed the loop" sh -c "test -f '$WORK/.verify/stop.log' && test ! -f '$WORK/.factory/loop.local.md'"
-check implement "no PR was opened by implement" test "$(pr_count)" = 0
+check implement "no PR was opened by implement" test "$(pr_new)" = 0
 TESTS_BEFORE=$(git rev-parse HEAD:tests)
 HEAD_BEFORE=$(git rev-parse HEAD)
 
@@ -82,7 +83,7 @@ printf '\nimport os  # noqa\n' >>src/ledger/money.py
 sh "$VERIFY" >"$RESULTS/verify-floor.log" 2>&1
 rc=$?
 check verify "a new suppression trips the floor with exit 1" sh -c "[ $rc -eq 1 ] && grep -q 'FLOOR new suppression' '$RESULTS/verify-floor.log'"
-git checkout -q -- .
+git checkout -q -- src
 git switch -q "$BRANCH"
 git branch -q -D probe-floor
 
@@ -107,20 +108,20 @@ sh "$VERIFY" >"$RESULTS/verify-crap.log" 2>&1
 rc=$?
 check verify "an untested complex function fails poly-crap with exit 1" sh -c "[ $rc -eq 1 ] && grep -q 'classify' '$RESULTS/verify-crap.log'"
 check verify "the model stage is skipped on a red tree" grep -q 'no model requests on a red tree' "$RESULTS/verify-crap.log"
-git checkout -q -- .
+git checkout -q -- src
 git switch -q "$BRANCH"
 git branch -q -D probe-crap
 rm -rf .verify
 sh "$VERIFY" >/dev/null 2>&1
 
 stage pr "/factory:pr. I invoked this on purpose; open the PR for the current slice." 12
-check pr "exactly one PR exists" test "$(pr_count)" = 1
+check pr "exactly one PR exists" test "$(pr_new)" = 1
 check pr "PR targets the slice parent" test "$(pr_field "$BRANCH" baseRefName)" = "$PARENT"
 check pr "PR is not a draft" test "$(pr_field "$BRANCH" isDraft)" = false
 check pr "PR body carries verify evidence" sh -c "gh pr list --head '$BRANCH' --state all --json body --jq '.[0].body' | grep -Eq 'exit 0|Verification'"
 check pr "PR body mentions the tracker item" sh -c "gh pr list --head '$BRANCH' --state all --json body --jq '.[0].body' | grep -Eq '#[0-9]+|issues/[0-9]+'"
 check pr "slice branch is on the remote" remote_branch_exists "$BRANCH"
-gh pr list --head "$BRANCH" --state all --json number,url,baseRefName,isDraft,title,body >"$RESULTS/pr.json"
+gh pr list --head "$BRANCH" --state all --json number,url,baseRefName,isDraft,title,body >"$RESULTS/prs.json"
 HEAD_BEFORE=$(git rev-parse HEAD)
 
 stage review "/factory:review" 12
