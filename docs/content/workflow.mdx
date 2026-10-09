@@ -7,12 +7,13 @@ sidebar:
 
 ## Shape
 
-```text
-/factory:setup  (once per repo)
-/factory:spec -> /factory:plan -> /factory:implement -> /factory:simplify
-                                        ^                      |
-                                        |                      v
-                                        +---- /factory:verify --+--> /factory:pr -> /factory:review
+```mermaid
+flowchart TD
+  setup["/factory:setup"] -. once per repo .-> spec["/factory:spec"]
+  spec --> plan["/factory:plan"] --> implement["/factory:implement"]
+  implement --> simplify["/factory:simplify"] --> verify{"/factory:verify"}
+  verify -- fails --> implement
+  verify -- green --> pr["/factory:pr"] --> review["/factory:review"]
 ```
 
 Every stage reads `factory.toml` first and falls back to detection when a

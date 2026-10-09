@@ -2,12 +2,13 @@
 
 A Claude Code plugin that runs a software factory loop for coding agents:
 
-```text
-/factory:setup  (once per repo)
-/factory:spec -> /factory:plan -> /factory:implement -> /factory:simplify
-                                        ^                      |
-                                        |                      v
-                                        +---- /factory:verify --+--> /factory:pr -> /factory:review
+```mermaid
+flowchart TD
+  setup["/factory:setup"] -. once per repo .-> spec["/factory:spec"]
+  spec --> plan["/factory:plan"] --> implement["/factory:implement"]
+  implement --> simplify["/factory:simplify"] --> verify{"/factory:verify"}
+  verify -- fails --> implement
+  verify -- green --> pr["/factory:pr"] --> review["/factory:review"]
 ```
 
 The point is to cut the babysitting. The human agrees a spec and a plan,
