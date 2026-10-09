@@ -31,8 +31,28 @@ CONFIG_PY="$HERE/factory-config.py"
 if command -v python3 >/dev/null 2>&1; then
   eval "$(python3 -I "$CONFIG_PY" factory.toml)"
 else
-  FACTORY_BASE=origin/main; VERIFY_THRESHOLD=5; VERIFY_COVERAGE=; VERIFY_LLM=0; VERIFY_EXCLUDE=; VERIFY_MAX_REQUESTS=50; VERIFY_MAX_ITERATIONS=5
+  FACTORY_SPEC_DIR=docs/specs; FACTORY_BASE=origin/main; VERIFY_THRESHOLD=5; VERIFY_COVERAGE=; VERIFY_LLM=0
+  VERIFY_EXCLUDE=; VERIFY_MAX_REQUESTS=50; VERIFY_MAX_ITERATIONS=5
   VERIFY_CMD_TYPECHECK=; VERIFY_CMD_LINT=; VERIFY_CMD_FORMAT=; VERIFY_CMD_TEST=
+fi
+# A planned slice is measured against its Parent from plan.md, so every
+# stage sees the slice alone and not the whole stack. BASE=<ref> still wins.
+slice_parent() {
+  branch=$(git branch --show-current 2>/dev/null)
+  [ -n "$branch" ] || return 1
+  for plan in "$FACTORY_SPEC_DIR"/*/plan.md; do
+    [ -f "$plan" ] || continue
+    parent=$(awk -v b="$branch" '
+      /^### / { inslice = 0 }
+      $0 == "- Branch: " b { inslice = 1 }
+      inslice && /^- Parent: / { sub(/^- Parent: */, ""); print; exit }
+    ' "$plan")
+    [ -n "$parent" ] && { printf '%s\n' "$parent"; return 0; }
+  done
+  return 1
+}
+if [ -z "${BASE:-}" ]; then
+  PARENT=$(slice_parent) && git rev-parse -q --verify "$PARENT^{commit}" >/dev/null 2>&1 && FACTORY_BASE=$PARENT
 fi
 BASE=${BASE:-$FACTORY_BASE}
 THRESHOLD=${THRESHOLD:-$VERIFY_THRESHOLD}
@@ -343,9 +363,9 @@ else
   note "  plan: $(lawbook_plan | tail -n 1), cap $MAX_REQUESTS"
   lawbook check . --config "$LAWBOOK_CONFIG" --changed --since "$BASE" --max-requests "$MAX_REQUESTS" --format json >"$OUT/lawbook.json"
   rc=$?
-  [ "$rc" -eq 2 ] && record 2
+  record "$rc"
   lawbook_summary
-  [ "$rc" -eq 1 ] && note "  advisory: model-judged standards do not gate; fix them or report them in the PR"
+  [ "$rc" -eq 1 ] && note "  a fail-level standard failed; warn-level findings above are advisory"
 fi
 
 stage "8  findings to Hunk"

@@ -7,7 +7,7 @@ absent. Keep it short; omit keys that match the defaults.
 ```toml
 [factory]
 spec_dir = "docs/specs"   # <spec_dir>/<slug>/{spec.md,plan.md,issues/}
-base = "origin/main"      # branch every diff and stack is measured against
+base = "origin/main"      # root of every stack; a planned slice measures against its Parent
 
 [tracker]
 kind = "github"           # github | gitlab | jira | local
@@ -18,7 +18,7 @@ jira_type = "Task"        # work item type for slices (jira only)
 [verify]
 crap_threshold = 5        # poly-crap --threshold
 coverage = ""             # lcov path when auto-detection fails
-llm = false               # run lawbook model-judged standards on a green tree
+llm = false               # judge lawbook prose standards on a green tree; fail-level ones gate
 max_requests = 50         # cap on model requests per verify run (one per rule per file)
 max_iterations = 5        # cap for the implement <-> verify loop
 exclude = []              # shell globs left out of every stage, e.g. ["upstream/*"]
