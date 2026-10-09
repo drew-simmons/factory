@@ -345,6 +345,7 @@ else
   rc=$?
   [ "$rc" -eq 2 ] && record 2
   lawbook_summary
+  [ "$rc" -eq 1 ] && note "  advisory: model-judged standards do not gate; fix them or report them in the PR"
 fi
 
 stage "8  findings to Hunk"
