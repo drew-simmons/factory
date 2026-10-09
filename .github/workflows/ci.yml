@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -27,6 +30,9 @@ jobs:
 
       - name: Vendored upstream matches the manifest
         run: uv run --script scripts/sync-upstream.py verify
+
+      - name: Lockfile matches pyproject
+        run: uv lock --check
 
       - name: Tests
         run: uv run pytest -q --cov --cov-report=lcov:coverage.lcov
@@ -62,3 +68,55 @@ jobs:
       - name: Upstream drift (informational)
         continue-on-error: true
         run: uv run --script scripts/sync-upstream.py check --fail-if-behind
+
+  release:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Next version
+        id: next
+        run: |
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "main moved past $GITHUB_SHA; the later run releases"
+            exit 0
+          fi
+          version=$(uv run --script scripts/release.py next)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "next: ${version:-no release}"
+
+      - name: Bump, commit, tag, push
+        if: steps.next.outputs.version != ''
+        env:
+          VERSION: ${{ steps.next.outputs.version }}
+        run: |
+          uv run --script scripts/release.py bump "$VERSION"
+          uv lock
+          uvx rumdl check CHANGELOG.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/plugin.json plugin.json pyproject.toml uv.lock CHANGELOG.md
+          git commit -q -m "chore(release): v$VERSION"
+          git tag -a "v$VERSION" -m "v$VERSION"
+          git push --atomic origin HEAD:main "refs/tags/v$VERSION"
+
+      - name: GitHub release
+        if: steps.next.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.next.outputs.version }}
+        run: |
+          uv run --script scripts/release.py notes "$VERSION" \
+            | gh release create "v$VERSION" --verify-tag --title "v$VERSION" --notes-file -
