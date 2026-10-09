@@ -2,22 +2,6 @@
 
 ## Unreleased
 
-- Tagged releases: after each merge to `main` that carries a `feat` or `fix`
-  commit, CI bumps the version in the plugin manifests, `pyproject.toml`, and
-  `uv.lock`, tags `vX.Y.Z`, and publishes a GitHub release with the changelog
-  section as the notes (`scripts/release.py`).
-
-## 0.3.0 (2026-10-09)
-
-- Docs site built with Blume under `docs/`, deployed to GitHub Pages,
-  with a guide on when to reach for factory that sizes a change as
-  small, medium, or large, and one page per skill.
-
-## 0.2.0 (2026-10-09)
-
-- `explain-diff` skill: a rich, interactive HTML explanation of a change,
-  diff, branch, or PR, with background, intuition, code walkthrough, and a
-  five-question quiz.
 - `simulations/`: three end-to-end runs (small bug, medium feature as a
   stack, large feature with parallel waves) that drive every skill through
   headless sessions against fixtures whose `lawbook.yaml` extends the
@@ -30,6 +14,22 @@
   `Parent` from `plan.md` instead of the whole stack.
 - The slice commit carries `<spec_dir>/<slug>/`; the tracker notes create
   the `factory` label before the first issue.
+
+## 0.3.0 (2026-10-09)
+
+- Docs site built with Blume under `docs/`, deployed to GitHub Pages,
+  with a guide on when to reach for factory that sizes a change as
+  small, medium, or large, and one page per skill.
+
+## 0.2.0 (2026-10-09)
+
+- `explain-diff` skill: a rich, interactive HTML explanation of a change,
+  diff, branch, or PR, with background, intuition, code walkthrough, and a
+  five-question quiz.
+- Tagged releases: after each merge to `main` that carries a `feat` or `fix`
+  commit, CI bumps the version in the plugin manifests, `pyproject.toml`, and
+  `uv.lock`, tags `vX.Y.Z`, and publishes a GitHub release with the changelog
+  section as the notes (`scripts/release.py`).
 
 ## 0.1.0 (2026-10-08)
 

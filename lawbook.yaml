@@ -40,7 +40,7 @@ rules:
 
   - id: no-dashes-as-punctuation
     description: Plain punctuation only in owned prose
-    files: ["skills/**/*.md", "agents/*.md", "README.md", "CHANGELOG.md", "evals/**/*.md", "docs/content/**/*.md", "simulations/**/*.md"]
+    files: ["skills/**/*.md", "agents/*.md", "README.md", "CHANGELOG.md", "evals/**/*.md", "simulations/**/*.md", "docs/content/**/*.md"]
     forbid: '[—–]'
     message: replace the em or en dash with a period or comma
 
