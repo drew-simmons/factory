@@ -62,7 +62,8 @@ parallel worktrees, each landing as one PR in a stack.
    item first, then each slice, blockers before dependents, and fill the
    `Tracker:` lines in `plan.md`.
 6. Reply with the plan path, the wave table, and the first frontier: the
-   slices with no blockers, ready for `/factory:implement`.
+   slices with no blockers, ready for `/factory:implement`. Do not commit;
+   the first slice commits `<spec_dir>/<slug>/` with its code.
 
 ## Done when
 

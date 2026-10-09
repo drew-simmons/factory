@@ -60,9 +60,12 @@ Single slice (`/factory:implement <NN>`):
 4. Run the full suite once. Then run `/factory:verify`. If it exits 1, fix
    only what it names and rerun, up to `max_iterations`. Write
    `.factory/loop.local.md` first (see `/factory:verify`) so the Stop hook
-   backstops the loop.
-5. Commit. Mark the slice done. Reply with the branch, the commit, the
-   tests added, and the verify result.
+   backstops the loop; leave `session_id` blank, the hook then acts for
+   any session.
+5. Commit the slice together with `<spec_dir>/<slug>/` (spec, plan, and
+   any issue files), so the stack carries its own spec and `/factory:pr`
+   never meets an untracked plan. Mark the slice done. Reply with the
+   branch, the commit, the tests added, and the verify result.
 
 All frontier slices (`/factory:implement --all`):
 
