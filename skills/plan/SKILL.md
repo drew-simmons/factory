@@ -46,6 +46,10 @@ parallel worktrees, each landing as one PR in a stack.
   the branch of the slice it is blocked by.
 - Slices in one wave must have disjoint write sets. When two slices touch
   the same files, put them in different waves and make one block the other.
+- Every blocker of a slice must be an ancestor of its `Parent`. A slice
+  that needs two independent chains cannot be stacked on both; serialize
+  the chains (make the head of one block the root of the other) rather
+  than let an implementer copy commits across branches.
 
 ## Steps
 

@@ -71,8 +71,10 @@ All frontier slices (`/factory:implement --all`):
 2. For each frontier slice spawn one `factory:implementer` agent in a
    worktree with the slice id, spec path, plan path, branch, and parent.
    Never run two slices with overlapping write sets at once.
-3. When an agent reports done, confirm its branch is green and pushed,
-   mark the slice done, recompute the frontier, and spawn the next wave.
+3. When an agent reports done, confirm its branch is green, remove the
+   agent's worktree (`git worktree remove <path>`) so the branch can be
+   checked out here, mark the slice done, recompute the frontier, and
+   spawn the next wave. Nothing is pushed until `/factory:pr`.
 4. Reply with a table of slices, branches, and verify results, and point at
    `/factory:pr` for the stack.
 

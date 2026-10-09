@@ -50,8 +50,8 @@ ask the same questions on every run.
    `acli jira auth status`. Report a failure; do not run a login.
 5. Show the draft `factory.toml`. Write it after the user accepts. Omit keys
    that equal the defaults so the file stays short.
-6. Add `.verify/` and `.factory/` to `.gitignore` if they are not already
-   ignored.
+6. Add `.verify/`, `.factory/`, and `.claude/worktrees/` (where implementer
+   agents work) to `.gitignore` if they are not already ignored.
 
 ## Done when
 
