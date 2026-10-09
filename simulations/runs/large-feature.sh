@@ -36,6 +36,10 @@ WAVE0=$(sed -n '/^```json$/,/^```$/p' "$PLAN" | sed '1d;$d' | jq -r '.waves[0].s
 stage implement-all "/factory:implement --all" 60
 snap implement-all
 release_worktrees
+# The parent wrote the plan in this checkout; every slice commit carries its
+# own copy, and the untracked one blocks checking a slice branch out.
+cp -R "$WORK/docs" "$RESULTS/parent-docs" 2>/dev/null
+git clean -fdq -- docs
 for id in $SLICES; do
   b=$(slice_branch "$id")
   p=$(slice_parent "$id")
