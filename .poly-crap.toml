@@ -1,2 +1,2 @@
 threshold = 5
-exclude = ["upstream/**", "tests/**", "evals/**"]
+exclude = ["upstream/**", "tests/**", "evals/**", "simulations/**"]

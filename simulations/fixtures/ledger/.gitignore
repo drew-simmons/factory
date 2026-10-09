@@ -1,0 +1,8 @@
+.venv/
+.verify/
+.factory/
+.pytest_cache/
+__pycache__/
+.coverage
+uv.lock
+node_modules/

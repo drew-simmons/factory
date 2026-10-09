@@ -1,0 +1,281 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/drew-simmons/lawbook/main/lawbook.schema.json
+#
+# Clean-code standards for any repository, distilled from ten books:
+#
+#   Clean Code, Robert C. Martin
+#   The Pragmatic Programmer, David Thomas and Andrew Hunt
+#   Refactoring, Martin Fowler
+#   Code Complete, Steve McConnell
+#   Design Patterns, Gamma, Helm, Johnson, and Vlissides
+#   Working Effectively with Legacy Code, Michael Feathers
+#   A Philosophy of Software Design, John Ousterhout
+#   Clean Architecture, Robert C. Martin
+#   Test-Driven Development: By Example, Kent Beck
+#   Release It!, Michael Nygard
+#
+# Every rule covers what a linter or formatter cannot: names, the shape of
+# functions, comments, error handling, dependencies, module boundaries, and
+# tests. Copy this file to lawbook.yaml, keep it beside your own and list it
+# under `extends`, or in a Node project extend the copy the package ships as
+# `lawbook/examples/clean-code.lawbook.yaml`. The file globs cover the common
+# languages; narrow them to yours. Each `standard` rule is one model request
+# per selected file, so on a pull request run `lawbook check --since
+# origin/main`, and on an old codebase start with `lawbook check
+# --update-baseline` so only new findings fail.
+# Format reference: https://drew-simmons.github.io/lawbook/configuration
+version: 1
+
+llm:
+  # Stops before the first request when a run would exceed this many. Raise
+  # it once you know what a full run costs.
+  maxRequests: 1000
+
+rules:
+  # Code Complete ch. 32: a reader starts with the README.
+  - id: has-readme
+    description: The repository explains itself
+    exists: ["README.md", "README", "readme.md"]
+
+  # Working Effectively with Legacy Code, preface: code without tests is
+  # legacy code. The first rule to name the test globs anchors them for the
+  # rules below.
+  - id: has-tests
+    description: The code has automated tests
+    level: warn
+    exists: &tests
+      - "**/*.{test,spec}.*"
+      - "**/*_test.*"
+      - "**/{test,tests,spec,__tests__}/**"
+
+  # The Pragmatic Programmer, "Finish What You Start": secrets stay out.
+  - id: no-env-file
+    description: Secrets stay out of the repository
+    absent: .env
+
+  # The Pragmatic Programmer, "Don't Live with Broken Windows": a TODO that
+  # cites no issue is a broken window nobody will fix.
+  - id: no-orphan-todos
+    description: Every TODO cites an issue
+    files: &source
+      - "**/*.{ts,tsx,js,jsx,mjs,cjs,py,go,rs,java,kt,rb,cs,swift,php,scala}"
+    exclude: &generated
+      - "**/node_modules/**"
+      - "**/dist/**"
+      - "**/build/**"
+      - "**/vendor/**"
+      - "**/migrations/**"
+      - "**/*.generated.*"
+      - "**/*.d.ts"
+    forbid: '(//|#|/\*|\*|--|<!--)\s*(TODO|FIXME|HACK|XXX)\b(?!.*(#\d+|[A-Z][A-Z0-9]+-\d+|https?://))'
+    message: link the comment to an issue, such as TODO(#123), or do it now
+
+  # Clean Code ch. 2, "Meaningful Names"; Code Complete ch. 11.
+  - id: names-reveal-intent
+    description: Every name says what the thing is or does
+    files: *source
+    exclude: &not-logic
+      - "**/node_modules/**"
+      - "**/dist/**"
+      - "**/build/**"
+      - "**/vendor/**"
+      - "**/migrations/**"
+      - "**/*.generated.*"
+      - "**/*.d.ts"
+      - "**/*.{test,spec}.*"
+      - "**/*_test.*"
+      - "**/{test,tests,spec,__tests__}/**"
+    standard: |
+      Every name says what the thing is or does without needing a comment. A
+      variable's name says what it holds, a function's name says what it
+      does, and a boolean reads as a question. No name is a vague placeholder
+      such as data, info, item, temp, obj, result, manager, helper, or util,
+      and no name repeats its type or the enclosing class. One word stands
+      for one concept throughout the file: not fetch in one place and
+      retrieve in another for the same operation. Exempt: a loop index in a
+      loop of a few lines, a lambda parameter whose type is obvious from the
+      call, and abbreviations the domain itself uses.
+
+  # Clean Code ch. 3, "Functions"; Refactoring, "Long Function"; Code
+  # Complete ch. 7, "High-Quality Routines".
+  - id: functions-do-one-thing
+    description: Every function does one thing at one level of abstraction
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Every function does one thing, stated by its name, at one level of
+      abstraction. A function that could be split into named steps, that
+      mixes computing a result with formatting or input and output, or whose
+      body falls into sections marked by blank lines or comments, is doing
+      more than one thing. Functions take few parameters, and none takes a
+      boolean flag that selects between two behaviors. Exempt: an entry point
+      whose only job is to call the steps in order.
+
+  # Clean Code ch. 4, "Comments"; A Philosophy of Software Design ch. 12 and
+  # 13; Refactoring, "Comments" as a smell.
+  - id: comments-say-why
+    description: Comments carry what the code cannot
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Every comment carries something the code cannot say: why a decision
+      was made, a non-obvious invariant, a workaround and its cause, or what
+      a public interface promises its callers. No comment restates what the
+      next line plainly does, no comment contradicts the code it describes,
+      and no code is left commented out. Author, date, and change-history
+      comments belong in version control, not in the file. A file with no
+      comments meets this standard when its code needs none.
+
+  # Code Complete ch. 12, "Fundamental Data Types"; Clean Code ch. 17, G25.
+  - id: no-magic-values
+    description: Literals with meaning are named
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Every literal whose meaning is not obvious from its context is bound
+      to a named constant or variable that says what it means: timeouts,
+      limits, retry counts, status codes, keys, URLs, and format strings.
+      Exempt: 0, 1, -1, the empty string, and a literal used once where the
+      surrounding name already explains it.
+
+  # Code Complete ch. 19, "General Control Issues"; Refactoring, "Replace
+  # Nested Conditional with Guard Clauses".
+  - id: guard-clauses-over-nesting
+    description: The main path reads straight down
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Preconditions and edge cases return early at the top of a function, so
+      the main path reads straight down without nesting. No code nests more
+      than three levels of blocks inside a function. A boolean expression is
+      simple enough to read aloud; a compound condition that needs thought is
+      given a name by a variable or a function. Exempt: nesting the language
+      forces, such as a match arm inside a loop.
+
+  # The Pragmatic Programmer, "Crash Early"; Clean Code ch. 7, "Error
+  # Handling"; A Philosophy of Software Design ch. 10.
+  - id: errors-are-handled-not-hidden
+    description: Every failure is handled or passed up with context
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Every failure is either handled where something can be done about it
+      or passed up with context; none is silently swallowed. No catch block
+      is empty, logs and continues as if nothing happened, or catches a
+      broader kind of error than it can handle. A function that cannot do
+      what its name promises raises or returns an explicit error instead of
+      null, -1, an empty value, or a success code, so callers never have to
+      guess. Error messages name what went wrong and the value that caused
+      it. Exceptions are not used for ordinary control flow. Exempt: a
+      top-level handler whose job is to report every error and exit.
+
+  # Working Effectively with Legacy Code ch. 4 and 25, seams; Design Patterns
+  # ch. 1, "program to an interface, not an implementation"; Clean
+  # Architecture ch. 11, the dependency rule.
+  - id: dependencies-are-injected
+    description: Logic can be tested without the outside world
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Logic that can be tested without the outside world is kept apart from
+      the code that touches it. A function that computes a result does not
+      also construct or reach for a clock, a random source, an environment
+      variable, a global, a network client, the filesystem, or a database
+      inside its body; those are passed in through parameters or a
+      constructor, so a test can substitute them. Business rules take plain
+      values and return plain values, and input and output happen at the
+      edges that call them. Modules depend on an interface or a function
+      they are given, not on a concrete implementation they instantiate.
+      Exempt: the entry point or composition root that wires the real
+      dependencies together, and a thin adapter whose only job is to call
+      one external API.
+
+  # The Pragmatic Programmer, "DRY"; Refactoring, "Duplicated Code".
+  - id: no-duplication
+    description: Each piece of knowledge is expressed once
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Each piece of knowledge in the file is expressed once. No two
+      functions or branches repeat the same sequence of statements with
+      small variations, no validation or conversion is copied instead of
+      called, and no constant is restated in several places. Similar-looking
+      code that encodes different decisions, and would rightly change
+      independently, is not duplication.
+
+  # Refactoring, "Speculative Generality"; Test-Driven Development: By
+  # Example, "you aren't gonna need it".
+  - id: no-speculative-generality
+    description: The file contains only what the program needs today
+    level: warn
+    files: *source
+    exclude: *not-logic
+    standard: |
+      The file contains only what the program needs today. No parameter is
+      unused, no abstract class or interface has a single implementation
+      added for a future that has not arrived, no hook or configuration flag
+      is read by nothing, and no code is unreachable or kept in case. An
+      abstraction is justified by two real callers that differ, not by an
+      imagined one.
+
+  # A Philosophy of Software Design ch. 4 to 7: deep modules and
+  # information hiding.
+  - id: deep-modules
+    description: A small interface over a substantial implementation
+    level: warn
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Each class or module offers a small, simple interface over a
+      substantial implementation. Its public surface is as small as it can
+      be: internals are not exported, mutable internal state is not returned
+      to callers, and implementation types do not leak into signatures. No
+      public method merely forwards its arguments to another method with the
+      same signature. A caller can use the interface correctly from its
+      signature and doc comment alone, without reading its body. Exempt: a
+      file that defines only plain data types.
+
+  # Design Patterns ch. 1, "favor object composition over class
+  # inheritance".
+  - id: composition-over-inheritance
+    description: Inheritance only where the subclass is substitutable
+    level: warn
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Inheritance is used only when the subclass can stand in for its parent
+      everywhere the parent is used. Code is not inherited for reuse alone,
+      hierarchies go no deeper than two levels, and no subclass overrides a
+      method to do nothing or to throw. Behavior that varies is composed from
+      smaller objects or functions passed in. A file with no inheritance
+      meets this standard.
+
+  # Release It! ch. 4 and 5, stability antipatterns and patterns; The
+  # Pragmatic Programmer, "Finish What You Start".
+  - id: outbound-calls-are-bounded
+    description: Every call that leaves the process has a timeout
+    files: *source
+    exclude: *not-logic
+    standard: |
+      Every call that leaves the process, to a network, another service, a
+      database, or a subprocess, sets an explicit timeout and has a defined
+      outcome when it fails. Retries are bounded and backed off, never
+      unlimited. Every resource the file opens, such as a connection, file
+      handle, lock, or stream, is released on every path, including the
+      error path. A file that makes no such calls and opens no such resource
+      meets this standard.
+
+  # Test-Driven Development: By Example; Clean Code ch. 9, "Unit Tests".
+  - id: tests-describe-behavior
+    description: Every test reads as a specification
+    files: *tests
+    exclude: *generated
+    standard: |
+      Every test reads as a specification. Its name states the behavior and
+      the condition, such as "rejects an expired token", not the name of the
+      method under test. Each test checks one behavior, with setup, action,
+      and assertion visible in that order, and asserts on observable
+      outcomes rather than on which internal calls were made. Tests do not
+      depend on each other, on execution order, on the wall clock, on the
+      network, or on sleeping. A test holds no branching or loops that would
+      need a test of their own. Exempt: helper and fixture files that
+      contain no test cases.

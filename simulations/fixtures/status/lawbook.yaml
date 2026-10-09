@@ -1,0 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/drew-simmons/lawbook/main/lawbook.schema.json
+version: 1
+extends: ["lawbook/examples/clean-code.lawbook.yaml"]
+rules: []

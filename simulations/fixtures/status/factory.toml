@@ -1,0 +1,8 @@
+[factory]
+base = "origin/main"
+
+[tracker]
+kind = "github"
+
+[verify]
+llm = true
