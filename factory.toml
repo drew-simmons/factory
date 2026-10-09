@@ -8,4 +8,4 @@ kind = "github"
 [verify]
 # Tooling repo: the sync script's argparse handlers sit between 5 and 10.
 crap_threshold = 10
-exclude = ["upstream/*", "evals/*"]
+exclude = ["upstream/*", "evals/*", "simulations/*"]

@@ -9,3 +9,4 @@ coverage.lcov
 .ruff_cache/
 evals/results/
 .temp/
+simulations/results/
