@@ -64,12 +64,13 @@ tree, untracked files included. Stack commands come from `factory.toml`
 
 ## --loop
 
-`/factory:verify --loop` writes `.factory/loop.local.md` with
-`session_id` (blank when unknown; the hook then acts for any session),
-`iteration: 0`, and `max_iterations`, then runs the loop. While that
-file exists the plugin's Stop hook reruns the script when the turn tries to
-end, blocks on exit 1 with the findings, and deletes the file on exit 0 or
-at the cap. `/factory:implement` arms it the same way.
+`/factory:verify --loop` runs `sh ${CLAUDE_SKILL_DIR}/scripts/verify.sh
+--loop`. The script writes `.factory/loop.local.md` (blank `session_id`,
+so the hook acts for any session, `iteration: 0`, and `max_iterations`)
+before the first stage, then runs the loop. While that file exists the
+plugin's Stop hook reruns the script when the turn tries to end, blocks on
+exit 1 with the findings, and deletes the file on exit 0 or at the cap.
+`/factory:implement` arms it the same way. Do not write the file by hand.
 
 ## Rules
 

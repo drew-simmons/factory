@@ -29,8 +29,8 @@ Before editing:
 Implement with the `factory:implement` skill's single-slice steps: for each
 acceptance check, write one failing test at an agreed seam, make it pass
 with the smallest change, run that file. Then run the full suite once and
-run the `factory:verify` skill until it exits 0 or reaches the iteration
-cap. Never weaken a test, skip a test, or add a suppression to get green.
+run the `factory:verify` skill with `--loop` until it exits 0 or reaches
+the iteration cap. Never weaken a test, skip a test, or add a suppression to get green.
 
 Commit on the slice branch with a conventional message citing the slice id
 and requirement ids. Include `<spec_dir>/<slug>/` in the commit when it is
