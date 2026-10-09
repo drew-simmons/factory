@@ -12,7 +12,7 @@ dev = ["pytest>=8", "pytest-cov>=5"]
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["scripts"]
+source = ["scripts", "skills/verify/scripts"]
 
 [tool.ruff]
 line-length = 100

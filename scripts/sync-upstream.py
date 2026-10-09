@@ -90,7 +90,7 @@ class Entry:
 
 
 def repo_url(repo: str) -> str:
-    if "://" in repo or repo.startswith("/") or repo.startswith("."):
+    if "://" in repo or repo.startswith(("/", ".")):
         return repo
     return f"https://github.com/{repo}.git"
 
@@ -105,9 +105,7 @@ def repo_slug(repo: str) -> str:
 
 
 def git(*args: str, cwd: Path | None = None) -> str:
-    result = subprocess.run(
-        ["git", *args], cwd=cwd, capture_output=True, text=True, check=False
-    )
+    result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         raise SyncError(f"git {' '.join(args)} failed:\n{result.stderr.strip()}")
     return result.stdout
@@ -294,26 +292,40 @@ def claimed_files(root: Path, entries: dict[str, Entry]) -> set[Path]:
     return claimed
 
 
-def verify_problems(root: Path, entries: dict[str, Entry]) -> list[str]:
-    problems = []
-    for entry in entries.values():
-        base = entry.vendor_dir(root)
-        for rel in entry.paths:
-            if not (base / rel).exists():
-                problems.append(f"{entry.name}: missing {base / rel}")
-        if content_hash(entry_files(base, entry)) != entry.hash:
-            problems.append(f"{entry.name}: content changed; vendored files are read-only")
-        if not (base / "LICENSE").is_file():
-            problems.append(f"{entry.name}: missing {base / 'LICENSE'}")
-    claimed = claimed_files(root, entries)
+def entry_problems(root: Path, entry: Entry) -> list[str]:
+    base = entry.vendor_dir(root)
+    problems = [
+        f"{entry.name}: missing {base / rel}" for rel in entry.paths if not (base / rel).exists()
+    ]
+    if content_hash(entry_files(base, entry)) != entry.hash:
+        problems.append(f"{entry.name}: content changed; vendored files are read-only")
+    if not (base / "LICENSE").is_file():
+        problems.append(f"{entry.name}: missing {base / 'LICENSE'}")
+    return problems
+
+
+def orphan_problems(root: Path, entries: dict[str, Entry]) -> list[str]:
     upstream_dir = root / "upstream"
-    if upstream_dir.is_dir():
-        for path in sorted(upstream_dir.rglob("*")):
-            if path.is_file() and path not in claimed:
-                problems.append(f"orphan file not claimed by any entry: {path}")
+    if not upstream_dir.is_dir():
+        return []
+    claimed = claimed_files(root, entries)
+    files = (p for p in sorted(upstream_dir.rglob("*")) if p.is_file())
+    return [f"orphan file not claimed by any entry: {p}" for p in files if p not in claimed]
+
+
+def notices_problems(root: Path, entries: dict[str, Entry]) -> list[str]:
     notices = root / NOTICES
-    if not notices.is_file() or notices.read_text() != notices_text(root, entries):
-        problems.append(f"{NOTICES} is stale; run `sync-upstream.py notices`")
+    if notices.is_file() and notices.read_text() == notices_text(root, entries):
+        return []
+    return [f"{NOTICES} is stale; run `sync-upstream.py notices`"]
+
+
+def verify_problems(root: Path, entries: dict[str, Entry]) -> list[str]:
+    problems: list[str] = []
+    for entry in entries.values():
+        problems.extend(entry_problems(root, entry))
+    problems.extend(orphan_problems(root, entries))
+    problems.extend(notices_problems(root, entries))
     return problems
 
 
@@ -354,7 +366,9 @@ def cmd_check(root: Path, args: argparse.Namespace) -> int:
     else:
         for row in rows:
             tags = f" newest tag {row['newerTags'][-1]}" if row["newerTags"] else ""
-            print(f"{row['status']:<14} {row['entry']:<40} {row['ref']} {row['pinned'][:12]} -> {row['head'][:12]}{tags}")
+            print(
+                f"{row['status']:<14} {row['entry']:<40} {row['ref']} {row['pinned'][:12]} -> {row['head'][:12]}{tags}"
+            )
     behind = [r for r in rows if r["status"] != "current"]
     return 1 if args.fail_if_behind and behind else 0
 
@@ -376,7 +390,9 @@ def cmd_diff(root: Path, args: argparse.Namespace) -> int:
         for rel in entry.paths:
             result = subprocess.run(
                 ["git", "diff", "--no-index", "--", str(before / rel), str(after / rel)],
-                capture_output=True, text=True, check=False,
+                capture_output=True,
+                text=True,
+                check=False,
             )
             sys.stdout.write(result.stdout.replace(tmp, "upstream"))
     return 0
@@ -426,7 +442,9 @@ def cmd_notices(root: Path, _args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parent.parent)
     sub = parser.add_subparsers(dest="command", required=True)
 
