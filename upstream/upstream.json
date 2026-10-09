@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "entries": {
+    "addyosmani-agent-skills/constraints": {
+      "repo": "addyosmani/agent-skills",
+      "ref": "0.6.12",
+      "resolved": "a06bc63b3f8b829c14b0bbf53d99fefc39d58092",
+      "paths": [
+        "skills/constraint-driven-development",
+        "references/definition-of-done.md"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:166368b296a77c615f4db382300f3d1905454d979642d8260c78f30f4b16ae8c",
+      "why": "quality gates and bar-lowering detection for /factory:verify"
+    },
+    "addyosmani-agent-skills/planning": {
+      "repo": "addyosmani/agent-skills",
+      "ref": "0.6.12",
+      "resolved": "a06bc63b3f8b829c14b0bbf53d99fefc39d58092",
+      "paths": [
+        "skills/planning-and-task-breakdown"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:fd943d162646c74b9fdb0c109b9781ed57f8ece2c9580adbbf29aaa3dec4c714",
+      "why": "dependency graph and acceptance criteria per task for /factory:plan"
+    },
+    "addyosmani-agent-skills/simplify": {
+      "repo": "addyosmani/agent-skills",
+      "ref": "0.6.12",
+      "resolved": "a06bc63b3f8b829c14b0bbf53d99fefc39d58092",
+      "paths": [
+        "skills/code-simplification",
+        "hooks/simplify-ignore.sh"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:9030abf81a612cc78e9c8b64053207163cf1d6c7451a3e112e55b33617762830",
+      "why": "behavior-preserving simplification process and protected blocks for /factory:simplify"
+    },
+    "coderabbitai-skills/review": {
+      "repo": "coderabbitai/skills",
+      "ref": "main",
+      "resolved": "928c3b61f71b578b1bcfbacc289f1446244dd9dd",
+      "paths": [
+        "skills/code-review",
+        "skills/autofix"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:f101edb77012911a2501b91e906893e1be6e1ef046b2c5999910ba189c4373c4",
+      "why": "local CodeRabbit CLI review and PR comment autofix for /factory:review and /factory:pr"
+    },
+    "cursor-plugins/deslop": {
+      "repo": "cursor/plugins",
+      "ref": "main",
+      "resolved": "ccb5507cec1546dc88135c1139c811e6c59115ba",
+      "paths": [
+        "cursor-team-kit/skills/deslop"
+      ],
+      "license": "MIT",
+      "licensePath": "pstack/LICENSE",
+      "hash": "sha256:f368058a51d5cb4565c973ef399776ff9f47ba1a70325f2212090dcd12ae8a1f",
+      "why": "remove AI slop from the diff for /factory:simplify"
+    },
+    "cursor-plugins/pstack-playbooks": {
+      "repo": "cursor/plugins",
+      "ref": "main",
+      "resolved": "ccb5507cec1546dc88135c1139c811e6c59115ba",
+      "paths": [
+        "pstack/skills/poteto-mode/playbooks/opening-a-pr.md",
+        "pstack/skills/poteto-mode/playbooks/babysit.md",
+        "pstack/skills/poteto-mode/playbooks/multi-phase-plan.md"
+      ],
+      "license": "MIT",
+      "licensePath": "pstack/LICENSE",
+      "hash": "sha256:70b385e2f7a1e9abc627cec2ac85f292175b746a6926ff8ea5cbbbf5202276ce",
+      "why": "stacked PR rules, PR babysitting order, and evidence-boxed plans"
+    },
+    "cursor-plugins/pstack-principles": {
+      "repo": "cursor/plugins",
+      "ref": "main",
+      "resolved": "ccb5507cec1546dc88135c1139c811e6c59115ba",
+      "paths": [
+        "pstack/skills/principle-prove-it-works",
+        "pstack/skills/principle-subtract-before-you-add",
+        "pstack/skills/principle-laziness-protocol"
+      ],
+      "license": "MIT",
+      "licensePath": "pstack/LICENSE",
+      "hash": "sha256:3a3e37b790fc1450e8a32de2138c7f33d27f731adafc7d24dc17a51cb4f21171",
+      "why": "one-rule principles cited by /factory:implement and /factory:simplify"
+    },
+    "drew-simmons-lawbook/skill": {
+      "repo": "drew-simmons/lawbook",
+      "ref": "v0.2.0",
+      "resolved": "81223bc88986da925837a21feb23aee2b8b4a150",
+      "paths": [
+        "skills/lawbook"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:d4c24550088d8a5fd718e701631285cca864ca355a3d3d841c0cbc3c87a6b8fc",
+      "why": "how to read lawbook findings and tune rules in /factory:verify"
+    },
+    "drew-simmons-poly-crap/skill": {
+      "repo": "drew-simmons/poly-crap",
+      "ref": "v0.8.2",
+      "resolved": "91c7c904e614909eef06812e9fb4e005aa6eeaca",
+      "paths": [
+        "skills/poly-crap"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:90de387739f04345c339b1dd326dc6f16be7c97cdcf34ef9392fee0195b0b92b",
+      "why": "how to read and act on CRAP findings in /factory:verify"
+    },
+    "mattpocock-skills/code-review": {
+      "repo": "mattpocock/skills",
+      "ref": "v1.3.1",
+      "resolved": "24fe0ef7737efae15c87225755e9f6f5965e4888",
+      "paths": [
+        "skills/engineering/code-review"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:51242bb50afb4c2183712fd8d7da7fadea5262d4f3ca26f35370ecd99f7031c3",
+      "why": "two-axis (standards, spec) review for /factory:review and smell list for /factory:simplify"
+    },
+    "mattpocock-skills/grilling": {
+      "repo": "mattpocock/skills",
+      "ref": "v1.3.1",
+      "resolved": "24fe0ef7737efae15c87225755e9f6f5965e4888",
+      "paths": [
+        "skills/productivity/grilling"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:519855ac227dea20e9c653151e73396a7de411de9c7b86a8819a490b819fe037",
+      "why": "design-tree interview rounds used by /factory:spec"
+    },
+    "mattpocock-skills/implement": {
+      "repo": "mattpocock/skills",
+      "ref": "v1.3.1",
+      "resolved": "24fe0ef7737efae15c87225755e9f6f5965e4888",
+      "paths": [
+        "skills/engineering/implement",
+        "skills/engineering/implement-spec"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:c6523dd257cda6d663193046d5576d6330cb2242ae4bad1a6567d60d62d43c64",
+      "why": "single-ticket flow and worktree orchestration for /factory:implement"
+    },
+    "mattpocock-skills/pr": {
+      "repo": "mattpocock/skills",
+      "ref": "v1.3.1",
+      "resolved": "24fe0ef7737efae15c87225755e9f6f5965e4888",
+      "paths": [
+        "skills/engineering/pr"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:0f251e15c423834181af5e1cc77e5cadba5e141d83db57779535a6bfb585a9b6",
+      "why": "evidence and merge-danger sections of the PR body for /factory:pr"
+    },
+    "mattpocock-skills/setup": {
+      "repo": "mattpocock/skills",
+      "ref": "v1.3.1",
+      "resolved": "24fe0ef7737efae15c87225755e9f6f5965e4888",
+      "paths": [
+        "skills/engineering/setup-matt-pocock-skills"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:6f2e9feb7da3886ead44496d4a3b2e470c1ee7668d87c014e9d0180f10b0a32d",
+      "why": "issue tracker docs (github, gitlab, local) for /factory:setup and /factory:plan"
+    },
+    "mattpocock-skills/tdd": {
+      "repo": "mattpocock/skills",
+      "ref": "v1.3.1",
+      "resolved": "24fe0ef7737efae15c87225755e9f6f5965e4888",
+      "paths": [
+        "skills/engineering/tdd"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:5dcebb362cabd5a00079a28d6b6c9cbae81cd9bccd9f82dee8ab1e644d80f258",
+      "why": "red-green loop, seams, and test anti-patterns for /factory:implement"
+    },
+    "mattpocock-skills/to-spec": {
+      "repo": "mattpocock/skills",
+      "ref": "v1.3.1",
+      "resolved": "24fe0ef7737efae15c87225755e9f6f5965e4888",
+      "paths": [
+        "skills/engineering/to-spec"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:a181701c829376a39d72d8689247d0226d8eee13be662e7dbb6eef8f04e52136",
+      "why": "spec.md template and seam-first testing decisions for /factory:spec"
+    },
+    "mattpocock-skills/to-tickets": {
+      "repo": "mattpocock/skills",
+      "ref": "v1.3.1",
+      "resolved": "24fe0ef7737efae15c87225755e9f6f5965e4888",
+      "paths": [
+        "skills/engineering/to-tickets"
+      ],
+      "license": "MIT",
+      "licensePath": "LICENSE",
+      "hash": "sha256:27a64f7e600766165aa5973bde528d5122088bdce51151dadd1fb42c21ea206d",
+      "why": "vertical-slice ticket breakdown and the frontier idea for /factory:plan"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+[project]
+name = "factory-tooling"
+version = "0.1.0"
+description = "Maintenance tooling for the factory Claude Code plugin."
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-cov>=5"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["scripts"]
+
+[tool.ruff]
+line-length = 100
