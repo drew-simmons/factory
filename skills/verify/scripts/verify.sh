@@ -17,7 +17,10 @@
 set -u
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "verify: not inside a git repository" >&2; exit 2; }
+# The repository under test: CLAUDE_PROJECT_DIR when a hook or skill sets it,
+# otherwise the git work tree that contains the current directory.
+ROOT=${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}
+[ -n "$ROOT" ] || { echo "verify: not inside a git repository (set CLAUDE_PROJECT_DIR)" >&2; exit 2; }
 cd "$ROOT" || exit 2
 
 OUT=.verify
@@ -124,6 +127,11 @@ detect_stack() {
   fi
 }
 STACK=$(detect_stack)
+# Node: follow the lockfile. PM runs scripts, PM_EXEC runs a package binary.
+if [ -f pnpm-lock.yaml ]; then PM=pnpm; PM_EXEC="pnpm exec"
+elif [ -f yarn.lock ]; then PM=yarn; PM_EXEC="yarn"
+else PM=npm; PM_EXEC="npx --no-install"
+fi
 SRC_GLOB=
 case $STACK in
   node)   SRC_GLOB='*.js *.jsx *.ts *.tsx *.mjs *.cjs' ;;
@@ -137,7 +145,7 @@ CHANGED_SRC_LINE=$(printf '%s' "$CHANGED_SRC" | tr '\n' ' ')
 
 default_typecheck() {
   case $STACK in
-    node)   if [ -f tsconfig.json ]; then echo "pnpm exec tsc --noEmit"; else echo "for f in $CHANGED_SRC_LINE; do node --check \"\$f\" || exit 1; done"; fi ;;
+    node)   if [ -f tsconfig.json ]; then echo "$PM_EXEC tsc --noEmit"; else echo "for f in $CHANGED_SRC_LINE; do node --check \"\$f\" || exit 1; done"; fi ;;
     python) echo "uv run python -m compileall -q $CHANGED_SRC_LINE" ;;
     rust)   echo "cargo check --quiet" ;;
     go)     echo "go vet ./..." ;;
@@ -145,7 +153,7 @@ default_typecheck() {
 }
 default_lint() {
   case $STACK in
-    node)   command -v pnpm >/dev/null 2>&1 && [ -n "$(ls eslint.config.* .eslintrc* 2>/dev/null)" ] && echo "pnpm exec eslint $CHANGED_SRC_LINE" ;;
+    node)   [ -n "$(ls eslint.config.* .eslintrc* 2>/dev/null)" ] && echo "$PM_EXEC eslint $CHANGED_SRC_LINE" ;;
     python) echo "uvx ruff check $CHANGED_SRC_LINE" ;;
     rust)   echo "cargo clippy --quiet -- -D warnings" ;;
     go)     command -v golangci-lint >/dev/null 2>&1 && echo "golangci-lint run" ;;
@@ -153,7 +161,7 @@ default_lint() {
 }
 default_format() {
   case $STACK in
-    node)   command -v pnpm >/dev/null 2>&1 && echo "pnpm exec prettier --check $CHANGED_SRC_LINE" ;;
+    node)   [ -n "$(ls .prettierrc* prettier.config.* 2>/dev/null)" ] && echo "$PM_EXEC prettier --check $CHANGED_SRC_LINE" ;;
     python) echo "uvx ruff format --check $CHANGED_SRC_LINE" ;;
     rust)   echo "cargo fmt --check" ;;
     go)     echo "test -z \"\$(gofmt -l $CHANGED_SRC_LINE)\"" ;;
@@ -161,7 +169,7 @@ default_format() {
 }
 default_test() {
   case $STACK in
-    node)   echo "pnpm test" ;;
+    node)   echo "$PM test" ;;
     python) echo "uv run pytest -q --cov --cov-report=lcov:$OUT/lcov.info" ;;
     rust)   echo "cargo llvm-cov --lcov --output-path $OUT/lcov.info" ;;
     go)     echo "go test -coverprofile=$OUT/coverage.out ./..." ;;
@@ -169,7 +177,7 @@ default_test() {
 }
 default_coverage() {
   case $STACK in
-    node)   echo coverage/lcov.info ;;
+    node)   if [ -f lcov.info ] && [ ! -f coverage/lcov.info ]; then echo lcov.info; else echo coverage/lcov.info; fi ;;
     python) echo "$OUT/lcov.info" ;;
     rust)   echo "$OUT/lcov.info" ;;
     go)     echo "$OUT/coverage.out" ;;

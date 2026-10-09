@@ -35,7 +35,7 @@ The verify script detects the stack from marker files, first match wins.
 
 | Marker | Stack | typecheck | lint | format | test (writes lcov) |
 |---|---|---|---|---|---|
-| `pnpm-lock.yaml`, `package.json` | node | `pnpm exec tsc --noEmit` (if tsconfig) | `pnpm exec eslint <files>` | `pnpm exec prettier --check <files>` | `pnpm test` with lcov at `coverage/lcov.info` |
+| `pnpm-lock.yaml`, `package.json` | node | `<pm> exec tsc --noEmit` (if tsconfig), else `node --check` | `<pm> exec eslint <files>` (if config) | `<pm> exec prettier --check <files>` (if config) | `<pm> test`; lcov at `coverage/lcov.info` or `lcov.info` |
 | `pyproject.toml`, `uv.lock` | python | `uv run python -m compileall -q <files>` | `uvx ruff check <files>` | `uvx ruff format --check <files>` | `uv run pytest --cov --cov-report=lcov:.verify/lcov.info` |
 | `Cargo.toml` | rust | `cargo check` | `cargo clippy -- -D warnings` | `cargo fmt --check` | `cargo llvm-cov --lcov --output-path .verify/lcov.info` |
 | `go.mod` | go | `go vet ./...` | `golangci-lint run` (if present) | `gofmt -l <files>` | `go test -coverprofile=.verify/coverage.out ./...` |
