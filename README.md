@@ -179,6 +179,12 @@ disagree.
 uv run --script scripts/release.py next --json
 ```
 
+End-to-end runs of the whole loop, one headless session per skill against
+a fixture repository on a throwaway GitHub remote, live in
+[simulations/](simulations/README.md) with a report per batch under
+`simulations/reports/`. They spend real model budget and are not part of
+CI.
+
 ## License
 
 MIT. Vendored files keep their own licenses; see
