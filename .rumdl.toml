@@ -1,0 +1,15 @@
+# Mirrors the shared settings in ~/.config/rumdl/rumdl.toml so CI and local
+# runs agree. Vendored upstream files are never linted.
+[global]
+exclude = [
+    ".git",
+    ".venv/**",
+    "node_modules",
+    "upstream/**",
+    "evals/results/**",
+]
+disable = ["MD036"]
+
+[MD013]
+code-blocks = false
+reflow = true
