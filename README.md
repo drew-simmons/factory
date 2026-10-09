@@ -98,8 +98,12 @@ The full schema and the stack defaults are in
 clean, 1 a gate failed, 2 the loop itself is broken. Stage 0 rejects any
 change that lowers the bar (a new suppression, a skipped or deleted test, a
 lowered threshold). Stages 1 to 6 run cheapest first and stop sending model
-requests on a red tree. Findings land in `.verify/` and in a live
-[Hunk](https://github.com/modem-dev/hunk) session when one is open.
+requests on a red tree; stage 7 judges lawbook's prose standards on a
+green tree when `llm = true`, and a `fail`-level standard fails the run.
+On a planned slice branch every stage measures against the slice's
+`Parent` from `plan.md`, not the whole stack. Findings land in `.verify/`
+and in a live [Hunk](https://github.com/modem-dev/hunk) session when one
+is open.
 
 `/factory:verify --loop` and `/factory:implement` write
 `.factory/loop.local.md`. While it exists, the plugin's Stop hook reruns the

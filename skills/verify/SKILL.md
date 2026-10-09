@@ -45,10 +45,11 @@ owns the fixes.
 
 ## Stages
 
-Cheapest first, all scoped to the merge base of `base` against the working
-tree, untracked files included. Stack commands come from `factory.toml`
-`[verify.commands]` or the defaults in
-`${CLAUDE_PLUGIN_ROOT}/skills/setup/references/factory-toml.md`.
+Cheapest first, all scoped to the merge base against the working tree, untracked
+files included. On a planned slice branch the base is the slice's `Parent` from
+`plan.md`, so the stack above it is not re-judged; otherwise it is `base` from
+`factory.toml`. Stack commands come from `factory.toml` `[verify.commands]` or
+the defaults in `${CLAUDE_PLUGIN_ROOT}/skills/setup/references/factory-toml.md`.
 
 | # | Stage | Fail | Missing tool |
 |---|---|---|---|
@@ -59,7 +60,7 @@ tree, untracked files included. Stack commands come from `factory.toml`
 | 4 | `lawbook check --no-llm --changed --since <base>` when `lawbook.yaml` exists | 1 | 2 |
 | 5 | tests with coverage | 1 | 2 |
 | 6 | `poly-crap --diff-base <base> --fail-above` (full scan when tests changed) | 1 | 2 |
-| 7 | lawbook model standards, only on a green tree with `llm = true` | warn | skip |
+| 7 | lawbook model standards, only on a green tree with `llm = true`; `warn`-level findings are advisory | 1 | skip |
 | 8 | findings to `.verify/notes.json` and a live Hunk session | - | skip |
 
 ## --loop

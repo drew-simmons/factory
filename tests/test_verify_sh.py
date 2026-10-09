@@ -182,3 +182,33 @@ def test_loop_flag_arms_the_stop_hook_state_file(repo: Path):
     state = (repo / ".factory" / "loop.local.md").read_text()
     assert "iteration: 0" in state
     assert "max_iterations: 5" in state
+
+
+@needs_tools
+def test_planned_slice_is_measured_against_its_parent(repo: Path):
+    # The parent branch carries a suppression; the slice stacked on it is
+    # clean. Against main the floor would trip; against the parent it must not.
+    suppression = "# " + "noqa"
+    (repo / "src" / "fixture.py").write_text(f"import os  {suppression}: F401\n\n\n" + MODULE)
+    commit_all(repo, "parent slice with a suppression")
+    git("switch", "-q", "-c", "feature-02", "feature", cwd=repo)
+    plan = repo / "docs" / "specs" / "stack" / "plan.md"
+    plan.parent.mkdir(parents=True)
+    plan.write_text(
+        "# stack plan\n\n### 01 parent\n\n- Branch: feature\n- Parent: main\n\n"
+        "### 02 child\n\n- Branch: feature-02\n- Parent: feature\n"
+    )
+    (repo / "src" / "fixture.py").write_text(
+        (repo / "src" / "fixture.py").read_text()
+        + "\n\ndef sub(a: int, b: int) -> int:\n    return a - b\n"
+    )
+    (repo / "tests" / "test_fixture.py").write_text(
+        TEST.replace("from fixture import add", "from fixture import add, sub")
+        + "\n\ndef test_sub():\n    assert sub(3, 1) == 2\n"
+    )
+    result = run_verify(repo)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "verify: feature..working tree" in result.stdout
+    against_main = run_verify(repo, BASE="main")
+    assert against_main.returncode == 1
+    assert "FLOOR new suppression" in against_main.stdout

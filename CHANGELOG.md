@@ -25,7 +25,9 @@
 - `verify.sh` finds standard rules through `extends`, reads the model
   request cap from `[verify].max_requests`, keeps the stack globs literal
   at the repository root, writes the Stop hook state file itself with
-  `--loop`, and labels failed model-judged standards as advisory.
+  `--loop`, fails on a `fail`-level model-judged standard (warn-level
+  findings stay advisory), and measures a planned slice against its
+  `Parent` from `plan.md` instead of the whole stack.
 - The slice commit carries `<spec_dir>/<slug>/`; the tracker notes create
   the `factory` label before the first issue.
 
