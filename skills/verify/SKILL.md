@@ -64,8 +64,9 @@ tree, untracked files included. Stack commands come from `factory.toml`
 
 ## --loop
 
-`/factory:verify --loop` writes `.factory/loop.local.md` with the session
-id, `iteration: 0`, and `max_iterations`, then runs the loop. While that
+`/factory:verify --loop` writes `.factory/loop.local.md` with
+`session_id` (blank when unknown; the hook then acts for any session),
+`iteration: 0`, and `max_iterations`, then runs the loop. While that
 file exists the plugin's Stop hook reruns the script when the turn tries to
 end, blocks on exit 1 with the findings, and deletes the file on exit 0 or
 at the cap. `/factory:implement` arms it the same way.

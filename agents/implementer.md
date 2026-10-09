@@ -33,8 +33,10 @@ run the `factory:verify` skill until it exits 0 or reaches the iteration
 cap. Never weaken a test, skip a test, or add a suppression to get green.
 
 Commit on the slice branch with a conventional message citing the slice id
-and requirement ids. Push with `git push -u origin <branch>`. Do not open a
-PR, do not merge, do not touch the parent branch.
+and requirement ids. Include `<spec_dir>/<slug>/` in the commit when it is
+untracked or changed, so the branch carries its spec and plan. Push with
+`git push -u origin <branch>`. Do not open a PR, do not merge, do not touch
+the parent branch.
 
 Report:
 

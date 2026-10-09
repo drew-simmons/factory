@@ -1,9 +1,12 @@
 # Publishing slices to a tracker
 
 Publish in dependency order, blockers first, so each slice can cite real
-identifiers. Write the body to a temporary file and pass it with a file
-flag; never interpolate markdown into a shell string. After publishing,
-fill the `Tracker:` line of each slice in `plan.md`.
+identifiers. Create the `factory` label first; a fresh repository does not
+have it and the first create fails without it. Write the body to a
+temporary file and pass it with a file flag; never interpolate markdown
+into a shell string. After publishing, fill the `Tracker:` line of each
+slice in `plan.md`. The spec directory stays uncommitted until the first
+slice commits it.
 
 Slice body, every tracker:
 
@@ -52,6 +55,7 @@ Read
 for the full command set. Minimum:
 
 ```bash
+gh label create factory --force --description "factory slice" --color 1D76DB
 gh issue create --title "<Feature>: tracking" --body-file /tmp/tracking.md --label factory
 gh issue create --title "NN <title>" --body-file /tmp/NN.md --label factory
 gh api repos/<owner>/<repo>/issues/<n> --jq .id
@@ -68,6 +72,7 @@ Follow the `glab` skill when it is available; it documents flags that fail
 silently. Minimum:
 
 ```bash
+glab label create --name factory --color '#1D76DB' --description "factory slice"
 glab issue create --title "<Feature>: tracking" --description "$(cat /tmp/tracking.md)" --label factory --yes
 glab issue create --title "NN <title>" --description "$(cat /tmp/NN.md)" --label factory --yes
 glab api --method POST "projects/:id/issues/<child-iid>/links" -f target_issue_iid=<blocker-iid> -f link_type=is_blocked_by
