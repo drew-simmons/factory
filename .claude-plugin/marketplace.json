@@ -1,0 +1,17 @@
+{
+  "name": "drew-simmons",
+  "description": "Plugins by Drew Simmons.",
+  "owner": {
+    "name": "Drew Simmons",
+    "url": "https://github.com/drew-simmons"
+  },
+  "plugins": [
+    {
+      "name": "factory",
+      "source": "./",
+      "description": "Software factory loop for coding agents: spec, plan, implement, simplify, verify, pr, review.",
+      "category": "Developer Tools",
+      "tags": ["workflow", "tdd", "verify", "stacked-prs"]
+    }
+  ]
+}
