@@ -1,6 +1,6 @@
 {
   "name": "factory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Software factory loop for coding agents: spec, plan, implement, simplify, verify, pr, review. Vendors upstream skills and wires in poly-crap and lawbook.",
   "author": {
     "name": "Drew Simmons",
