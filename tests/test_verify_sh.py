@@ -146,3 +146,39 @@ def test_unknown_stack_without_commands_exits_two(tmp_path: Path):
     result = run_verify(repo, BASE="main")
     assert result.returncode == 2
     assert "unknown stack" in result.stdout
+
+
+@needs_tools
+def test_root_level_source_file_does_not_hide_changes_under_src(repo: Path):
+    # An unquoted *.py at the repository root used to expand to conftest.py
+    # and turn the pathspec into that one file, so src/ changes went unseen.
+    (repo / "conftest.py").write_text("")
+    commit_all(repo, "add conftest")
+    (repo / "src" / "fixture.py").write_text(MODULE + "import os  # no" + "qa\n")
+    result = run_verify(repo)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "FLOOR new suppression" in result.stdout
+    assert "src/fixture.py" in result.stdout
+
+
+@needs_tools
+def test_loop_flag_arms_the_stop_hook_state_file(repo: Path):
+    (repo / "src" / "fixture.py").write_text(
+        MODULE + "\n\ndef sub(a: int, b: int) -> int:\n    return a - b\n"
+    )
+    (repo / "tests" / "test_fixture.py").write_text(
+        TEST.replace("from fixture import add", "from fixture import add, sub")
+        + "\n\ndef test_sub():\n    assert sub(3, 1) == 2\n"
+    )
+    result = subprocess.run(
+        ["sh", str(VERIFY), "--loop"],
+        cwd=repo,
+        env={**os.environ, "HUNK": "0"},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    state = (repo / ".factory" / "loop.local.md").read_text()
+    assert "iteration: 0" in state
+    assert "max_iterations: 5" in state

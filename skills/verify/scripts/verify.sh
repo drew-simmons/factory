@@ -31,7 +31,7 @@ CONFIG_PY="$HERE/factory-config.py"
 if command -v python3 >/dev/null 2>&1; then
   eval "$(python3 -I "$CONFIG_PY" factory.toml)"
 else
-  FACTORY_BASE=origin/main; VERIFY_THRESHOLD=5; VERIFY_COVERAGE=; VERIFY_LLM=0; VERIFY_EXCLUDE=; VERIFY_MAX_REQUESTS=50
+  FACTORY_BASE=origin/main; VERIFY_THRESHOLD=5; VERIFY_COVERAGE=; VERIFY_LLM=0; VERIFY_EXCLUDE=; VERIFY_MAX_REQUESTS=50; VERIFY_MAX_ITERATIONS=5
   VERIFY_CMD_TYPECHECK=; VERIFY_CMD_LINT=; VERIFY_CMD_FORMAT=; VERIFY_CMD_TEST=
 fi
 BASE=${BASE:-$FACTORY_BASE}
@@ -39,6 +39,14 @@ THRESHOLD=${THRESHOLD:-$VERIFY_THRESHOLD}
 VERIFY_LLM=${VERIFY_LLM_OVERRIDE:-$VERIFY_LLM}
 MAX_REQUESTS=${MAX_REQUESTS:-$VERIFY_MAX_REQUESTS}
 LAWBOOK_CONFIG=${LAWBOOK_CONFIG:-lawbook.yaml}
+
+# --loop arms the Stop hook: while .factory/loop.local.md exists, a red
+# change cannot end the turn. An existing file keeps its iteration count.
+if [ "${1:-}" = "--loop" ]; then
+  mkdir -p .factory
+  [ -f .factory/loop.local.md ] || printf -- '---\nsession_id: %s\niteration: 0\nmax_iterations: %s\n---\n' \
+    "${CLAUDE_SESSION_ID:-}" "$VERIFY_MAX_ITERATIONS" >.factory/loop.local.md
+fi
 
 git rev-parse -q --verify "$BASE^{commit}" >/dev/null 2>&1 || BASE=main
 MERGE_BASE=$(git merge-base "$BASE" HEAD 2>/dev/null) \
@@ -139,8 +147,13 @@ case $STACK in
   rust)   SRC_GLOB='*.rs' ;;
   go)     SRC_GLOB='*.go' ;;
 esac
+# Globbing stays off while the patterns are split: at the repository root a
+# bare *.ts or *.py would otherwise expand to the files that happen to sit
+# there (vitest.config.ts, conftest.py) and hide every change under src/.
+set -f
 # shellcheck disable=SC2086
 CHANGED_SRC=$(changed_files $SRC_GLOB)
+set +f
 CHANGED_SRC_LINE=$(printf '%s' "$CHANGED_SRC" | tr '\n' ' ')
 
 default_typecheck() {
