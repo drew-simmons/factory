@@ -19,6 +19,7 @@ jira_type = "Task"        # work item type for slices (jira only)
 crap_threshold = 5        # poly-crap --threshold
 coverage = ""             # lcov path when auto-detection fails
 llm = false               # run lawbook model-judged standards on a green tree
+max_requests = 50         # cap on model requests per verify run (one per rule per file)
 max_iterations = 5        # cap for the implement <-> verify loop
 exclude = []              # shell globs left out of every stage, e.g. ["upstream/*"]
 
