@@ -92,8 +92,9 @@ on_branch() { [ "$(in_work git branch --show-current)" = "$1" ]; }
 branch_exists() { in_work git rev-parse -q --verify "refs/heads/$1" >/dev/null; }
 remote_branch_exists() { in_work git ls-remote --exit-code --heads origin "$1" >/dev/null; }
 green_matches() {
-  # verify.sh short-circuits on the stamp only when the tree is the one it passed
-  in_work sh "$FACTORY/skills/verify/scripts/verify.sh" 2>/dev/null | grep -q "unchanged since the last green run"
+  # The tree verifies clean. (The stamp alone is not enough: committing a
+  # file that was untracked when the stage ran changes its hash.)
+  in_work sh "$FACTORY/skills/verify/scripts/verify.sh" >/dev/null 2>&1
 }
 pr_count() { in_work gh pr list --state all --json number --jq length; }
 pr_field() { in_work gh pr list --head "$1" --state all --json "$2" --jq ".[0].$2"; }
