@@ -43,7 +43,7 @@ jobs:
           uvx ruff format --check scripts skills/verify/scripts tests
 
       - name: Markdown
-        run: uvx rumdl check README.md CHANGELOG.md skills
+        run: uvx rumdl check README.md CHANGELOG.md skills docs/content
 
       - name: Agent Skills spec
         run: |

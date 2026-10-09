@@ -5,6 +5,9 @@ exclude = [
     ".git",
     ".venv/**",
     "node_modules",
+    "**/node_modules/**",
+    "**/.blume/**",
+    "**/dist/**",
     "upstream/**",
     "evals/results/**",
 ]

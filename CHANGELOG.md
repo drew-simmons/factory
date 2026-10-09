@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Docs site built with Blume under `docs/`, deployed to GitHub Pages,
+  with a guide on when to reach for factory that sizes a change as
+  small, medium, or large, and one page per skill.
+
 ## 0.2.0 (2026-10-09)
 
 - `explain-diff` skill: a rich, interactive HTML explanation of a change,

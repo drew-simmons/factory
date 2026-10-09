@@ -15,6 +15,9 @@ then the agent works slices one at a time or in parallel worktrees, each
 slice ending in a verification loop that it cannot talk its way out of, and
 each landing as one PR in a stack.
 
+The docs site at <https://drew-simmons.github.io/factory> has a guide on
+when to reach for factory and one page per skill.
+
 The skills are thin, owned wrappers. The method inside them comes from
 upstream skills by Matt Pocock, the Cursor pstack team, Addy Osmani, and
 CodeRabbit, vendored verbatim under `upstream/` and pinned by content hash,
@@ -146,6 +149,13 @@ claude plugin eval . --threshold 0.8
 
 The eval case `verify-runs-on-fixture` needs `--scaffold` and Bash grants;
 see the comment at the top of its `scaffold.sh`.
+
+The docs site is a [Blume](https://useblume.dev) project under `docs/`
+with pages in `docs/content/`:
+
+```bash
+pnpm -C docs dev
+```
 
 ### Releases
 
