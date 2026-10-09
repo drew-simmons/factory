@@ -11,6 +11,7 @@ VERIFY="$FACTORY/skills/verify/scripts/verify.sh"
 sh "$SIM/fixtures/ledger/scaffold.sh" "$WORK" "$REPO" || exit 2
 cd "$WORK" || exit 2
 BASE_SHA=$(git rev-parse HEAD)
+PR0=$(pr_count)
 
 stage spec "/factory:spec Feature: a monthly statement. \`ledger statement <file> --month 2026-09\` prints every transaction posted in that month grouped by category, each group with its subtotal, then the month's closing balance. \`ledger balance <file>\` gains --since and --until date filters (inclusive) that limit which transactions count. Amounts keep the half-up cent rounding the README describes. Dates are ISO; a bad month or date is a usage error."
 reply spec-agree "Take your recommended answer for every open question, update the spec file accordingly, clear the open questions section, and set Status: agreed."
@@ -77,7 +78,7 @@ for id in $SLICES; do
   git switch -q "$b"
   stage "pr-$id" "/factory:pr. I invoked this on purpose; open the PR for slice $id, the current branch." 12
   n=$((n + 1))
-  check "pr-$id" "PR $id exists" test "$(pr_count)" = "$n"
+  check "pr-$id" "PR $id exists" test "$(pr_new)" = "$n"
   check "pr-$id" "PR $id targets its parent $p" test "$(pr_field "$b" baseRefName)" = "$p"
   check "pr-$id" "PR $id is not a draft" test "$(pr_field "$b" isDraft)" = false
   check "pr-$id" "slice $id branch is on the remote" remote_branch_exists "$b"

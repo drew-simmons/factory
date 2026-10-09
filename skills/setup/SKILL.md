@@ -52,8 +52,12 @@ ask the same questions on every run.
    that equal the defaults so the file stays short.
 6. Add `.verify/`, `.factory/`, and `.claude/worktrees/` (where implementer
    agents work) to `.gitignore` if they are not already ignored.
+7. Commit `factory.toml` and `.gitignore` when either changed, as
+   `chore: configure factory`, and nothing else. Setup is the one skill
+   that commits configuration; later skills refuse an uncommitted tree.
 
 ## Done when
 
 `factory.toml` exists, every key in it was either detected or chosen by the
-user, and the reply lists the verify commands the stack default will run.
+user, its changes are committed, and the reply lists the verify commands
+the stack default will run.

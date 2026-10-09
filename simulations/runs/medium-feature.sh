@@ -11,6 +11,7 @@ VERIFY="$FACTORY/skills/verify/scripts/verify.sh"
 sh "$SIM/fixtures/status/scaffold.sh" "$WORK" "$REPO" || exit 2
 cd "$WORK" || exit 2
 BASE_SHA=$(git rev-parse HEAD)
+PR0=$(pr_count)
 
 stage setup "/factory:setup. I invoked this on purpose. Keep every value already in factory.toml; for anything you would otherwise ask me, take your own recommended answer and continue."
 check setup "factory.toml keeps the github tracker" file_has factory.toml '^kind = "github"'
@@ -54,7 +55,7 @@ check implement-01 "poly-crap found the vitest lcov" grep -q 'no changed functio
 S1=$(git rev-parse HEAD)
 
 stage pr-01 "/factory:pr. I invoked this on purpose; open the PR for slice 01." 12
-check pr-01 "one PR exists" test "$(pr_count)" = 1
+check pr-01 "one PR exists" test "$(pr_new)" = 1
 check pr-01 "PR 01 targets main" test "$(pr_field "$B1" baseRefName)" = "$P1"
 check pr-01 "PR 01 is not a draft" test "$(pr_field "$B1" isDraft)" = false
 check pr-01 "PR 01 body carries verify evidence" sh -c "gh pr list --head '$B1' --state all --json body --jq '.[0].body' | grep -Eq 'exit 0|Verification'"
@@ -81,7 +82,7 @@ if ! tracked_clean; then
 fi
 
 stage pr-02 "/factory:pr. I invoked this on purpose; open the PR for slice 02." 12
-check pr-02 "two PRs exist" test "$(pr_count)" = 2
+check pr-02 "two PRs exist" test "$(pr_new)" = 2
 check pr-02 "PR 02 targets slice 01's branch" test "$(pr_field "$B2" baseRefName)" = "$B1"
 check pr-02 "PR 02 is not a draft" test "$(pr_field "$B2" isDraft)" = false
 check pr-02 "PR 02 body names its parent PR or branch" sh -c "gh pr list --head '$B2' --state all --json body --jq '.[0].body' | grep -q '$B1'"
