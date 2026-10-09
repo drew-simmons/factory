@@ -5,6 +5,10 @@
 - `explain-diff` skill: a rich, interactive HTML explanation of a change,
   diff, branch, or PR, with background, intuition, code walkthrough, and a
   five-question quiz.
+- Tagged releases: after each merge to `main` that carries a `feat` or `fix`
+  commit, CI bumps the version in the plugin manifests, `pyproject.toml`, and
+  `uv.lock`, tags `vX.Y.Z`, and publishes a GitHub release with the changelog
+  section as the notes (`scripts/release.py`).
 
 ## 0.1.0 (2026-10-08)
 

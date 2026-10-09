@@ -147,6 +147,27 @@ claude plugin eval . --threshold 0.8
 The eval case `verify-runs-on-fixture` needs `--scaffold` and Bash grants;
 see the comment at the top of its `scaffold.sh`.
 
+### Releases
+
+Merging to `main` cuts a release when the commits since the last `v*` tag
+include a `feat` or `fix`. The `release` job in CI runs
+`scripts/release.py next` (`feat` bumps minor, `fix` bumps patch, a `!` or a
+`BREAKING CHANGE` footer bumps major, applied as minor while the major is 0),
+rewrites the version in the two plugin manifests, `pyproject.toml`, and
+`uv.lock`, renames `## Unreleased` in `CHANGELOG.md` to the new version,
+commits `chore(release): vX.Y.Z`, tags it, and publishes a GitHub release
+with that changelog section as the notes.
+
+Add a bullet under `## Unreleased` in the PR that earns it. When the section
+has no bullets, the job writes one per `feat` and `fix` subject. Do not bump
+the version by hand: the `plugin.json` version is what tells installed copies
+to update, and the job refuses to run when the files and the last tag
+disagree.
+
+```bash
+uv run --script scripts/release.py next --json
+```
+
 ## License
 
 MIT. Vendored files keep their own licenses; see
