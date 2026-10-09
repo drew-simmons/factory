@@ -18,8 +18,12 @@ mkdir -p "$RESULTS"
 WORK=${SIM_WORK_ROOT:-${TMPDIR:-/tmp}/factory-sim}/$RUN/repo
 CHECKS=$RESULTS/checks.tsv
 STAGES=$RESULTS/stages.tsv
-: >"$CHECKS"
-: >"$STAGES"
+# SIM_APPEND=1 keeps the records of an earlier attempt, for continuing a run
+# by hand from a later stage.
+if [ "${SIM_APPEND:-0}" != "1" ]; then
+  : >"$CHECKS"
+  : >"$STAGES"
+fi
 BUDGET=${SIM_BUDGET:-10}
 MODEL=${SIM_MODEL:-}
 ALLOWED='Bash(git *) Bash(gh *) Bash(sh *) Bash(uv *) Bash(uvx *) Bash(pnpm *) Bash(npx *) Bash(poly-crap *) Bash(lawbook *) Bash(coderabbit *) Bash(cr *) Bash(jq *) Bash(python3 *) Bash(node *) Bash(cat *) Bash(ls *) Bash(mkdir *) Bash(cp *) Bash(mv *) Bash(rm *) Bash(sed *) Bash(grep *) Bash(wc *) Bash(head *) Bash(tail *) Bash(diff *) Bash(echo *) Bash(printf *) Bash(test *) Bash(true) Read Edit Write Glob Grep Agent Skill TodoWrite'
@@ -125,4 +129,13 @@ disjoint_changes() {
   in_work git diff --name-only "$1" "$4" -- "$2" | sort >"$RESULTS/.changed-b"
   [ -s "$RESULTS/.changed-a" ] && [ -s "$RESULTS/.changed-b" ] \
     && [ -z "$(comm -12 "$RESULTS/.changed-a" "$RESULTS/.changed-b")" ]
+}
+
+# release_worktrees: implementer agents leave their worktrees behind with the
+# slice branches checked out, which blocks `git switch` in the main checkout.
+release_worktrees() {
+  in_work git worktree list --porcelain | sed -n 's/^worktree //p' | tail -n +2 | while IFS= read -r path; do
+    in_work git worktree remove --force "$path"
+  done
+  in_work git worktree prune
 }

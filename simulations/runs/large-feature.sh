@@ -35,11 +35,11 @@ WAVE0=$(sed -n '/^```json$/,/^```$/p' "$PLAN" | sed '1d;$d' | jq -r '.waves[0].s
 
 stage implement-all "/factory:implement --all" 60
 snap implement-all
+release_worktrees
 for id in $SLICES; do
   b=$(slice_branch "$id")
   p=$(slice_parent "$id")
   check implement-all "slice $id branch $b exists" branch_exists "$b"
-  check implement-all "slice $id branch is on the remote" remote_branch_exists "$b"
   check implement-all "slice $id branch descends from its parent $p" sh -c "git merge-base --is-ancestor '$p' '$b'"
   check implement-all "slice $id has its own commit" test "$(git rev-parse "$b" 2>/dev/null)" != "$(git rev-parse "$p" 2>/dev/null)"
   check implement-all "slice $id commit cites the slice" sh -c "git log -1 --format=%s '$b' | grep -Eq '\($id, R[0-9]'"
@@ -50,7 +50,8 @@ check implement-all "implementer agents were spawned" sh -c "jq -e '.subagent_st
 check implement-all "the reply reports a verify result per slice" sh -c "[ \$(grep -Eic 'verify' '$RESULTS/implement-all.result.md') -ge 1 ]"
 LAST=$(printf '%s\n' $SLICES | tail -n 1)
 LAST_BRANCH=$(slice_branch "$LAST")
-git switch -q "$LAST_BRANCH" 2>/dev/null
+git switch -q "$LAST_BRANCH"
+check implement-all "the last slice branch is checked out" on_branch "$LAST_BRANCH"
 check implement-all "the statement command works end to end" sh -c "cd '$WORK' && printf '2026-09-03, groceries, market, -42.10\n2026-09-05, salary, september, 2500.00\n2026-10-01, groceries, bakery, -3.50\n' > $RESULTS/sample.csv && uv run ledger statement $RESULTS/sample.csv --month 2026-09 | grep -q '2457.90'"
 check implement-all "the balance filters work end to end" sh -c "cd '$WORK' && uv run ledger balance $RESULTS/sample.csv --since 2026-10-01 | grep -q -- '-3.50'"
 check implement-all "verify is green on the last slice" green_matches
@@ -75,6 +76,7 @@ for id in $SLICES; do
   check "pr-$id" "PR $id exists" test "$(pr_count)" = "$n"
   check "pr-$id" "PR $id targets its parent $p" test "$(pr_field "$b" baseRefName)" = "$p"
   check "pr-$id" "PR $id is not a draft" test "$(pr_field "$b" isDraft)" = false
+  check "pr-$id" "slice $id branch is on the remote" remote_branch_exists "$b"
 done
 gh pr list --state all --json number,url,baseRefName,headRefName,isDraft,title,body >"$RESULTS/prs.json"
 git switch -q "$LAST_BRANCH"
