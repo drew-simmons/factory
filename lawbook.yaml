@@ -18,8 +18,9 @@ rules:
     absent: [".env", "**/*.pem"]
 
   - id: skill-cites-upstream
-    description: Every factory skill is a wrapper over vendored method files
+    description: Every factory loop skill is a wrapper over vendored method files; explain-diff is wholly owned and has no upstream
     files: ["skills/*/SKILL.md"]
+    exclude: ["skills/explain-diff/SKILL.md"]
     require: '\$\{CLAUDE_PLUGIN_ROOT\}/upstream/'
     message: the skill does not load any file under upstream/
 
