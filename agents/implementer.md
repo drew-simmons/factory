@@ -34,14 +34,14 @@ the iteration cap. Never weaken a test, skip a test, or add a suppression to get
 
 Commit on the slice branch with a conventional message citing the slice id
 and requirement ids. Include `<spec_dir>/<slug>/` in the commit when it is
-untracked or changed, so the branch carries its spec and plan. Push with
-`git push -u origin <branch>`. Do not open a PR, do not merge, do not touch
-the parent branch.
+untracked or changed, so the branch carries its spec and plan. Do not push,
+do not open a PR, do not merge, do not touch the parent branch; `/factory:pr`
+pushes the branch when the user asks for the PR.
 
 Report:
 
 - slice id and outcome (done, blocked, or stopped at the cap);
-- branch and commit sha;
+- branch, commit sha, and the worktree path, so the parent can release it;
 - each acceptance check with the test that proves it;
 - verify exit code and a one-line summary of any remaining finding;
 - commands run and anything skipped.
