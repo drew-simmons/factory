@@ -25,5 +25,16 @@ if [ -z "${GH_TOKEN:-}" ]; then
   GH_TOKEN=$(pass show "${SIM_GH_PASS_ENTRY:-Personal/GITHUB_TOKEN}") || { echo "run.sh: no GitHub token" >&2; exit 2; }
   export GH_TOKEN
 fi
+# A plugin root under a .claude/ directory (where the desktop app keeps its
+# worktrees) makes Claude Code treat reads of the vendored upstream files as
+# sensitive and deny them in headless mode, so the sessions load the plugin
+# through a symlink that keeps .claude/ out of the path.
+case $FACTORY in
+  */.claude/*)
+    WORK_ROOT=${SIM_WORK_ROOT:-${TMPDIR:-/tmp}/factory-sim}
+    mkdir -p "$WORK_ROOT"
+    ln -sfn "$FACTORY" "$WORK_ROOT/factory-plugin"
+    FACTORY=$WORK_ROOT/factory-plugin ;;
+esac
 export SIM FACTORY RUN
 exec sh "$SIM/runs/$RUN.sh"
