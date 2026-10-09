@@ -16,14 +16,14 @@ parallel worktrees, each landing as one PR in a stack.
 ## Load
 
 - `${CLAUDE_PLUGIN_ROOT}/upstream/mattpocock-skills/skills/engineering/to-tickets/SKILL.md`:
-  tracer-bullet slices, blocking edges, expand-contract for wide refactors,
-  the frontier, and the quiz-the-user step.
+  tracer-bullet slices, blocking edges, expand-contract for wide refactors, the
+  frontier, and the quiz-the-user step.
 - `${CLAUDE_PLUGIN_ROOT}/upstream/addyosmani-agent-skills/skills/planning-and-task-breakdown/SKILL.md`:
-  dependency graph and acceptance criteria per task. Skim; do not write
-  its `tasks/plan.md` or `tasks/todo.md`.
+  dependency graph and acceptance criteria per task. Skim; do not write its
+  `tasks/plan.md` or `tasks/todo.md`.
 - `${CLAUDE_PLUGIN_ROOT}/upstream/cursor-plugins/pstack/skills/poteto-mode/playbooks/multi-phase-plan.md`:
-  one PR per section with its own evidence. Take the idea, not the
-  swarm-lane template.
+  one PR per section with its own evidence. Take the idea, not the swarm-lane
+  template.
 - `${CLAUDE_SKILL_DIR}/references/plan-template.md` and
   `${CLAUDE_SKILL_DIR}/references/trackers.md`.
 

@@ -18,8 +18,8 @@ ask the same questions on every run.
 - `${CLAUDE_SKILL_DIR}/references/factory-toml.md`: the schema, stack
   defaults, and tracker kinds.
 - `${CLAUDE_PLUGIN_ROOT}/upstream/mattpocock-skills/skills/engineering/setup-matt-pocock-skills/SKILL.md`:
-  the explore-then-confirm pattern. Read its `issue-tracker-*.md` siblings
-  only when the chosen tracker needs them.
+  the explore-then-confirm pattern. Read its `issue-tracker-*.md` siblings only
+  when the chosen tracker needs them.
 
 ## Translate
 

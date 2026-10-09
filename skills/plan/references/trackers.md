@@ -47,7 +47,8 @@ editing the file. A slice is unblocked when every file it lists is `done`.
 
 ## github
 
-Read `${CLAUDE_PLUGIN_ROOT}/upstream/mattpocock-skills/skills/engineering/setup-matt-pocock-skills/issue-tracker-github.md`
+Read
+`${CLAUDE_PLUGIN_ROOT}/upstream/mattpocock-skills/skills/engineering/setup-matt-pocock-skills/issue-tracker-github.md`
 for the full command set. Minimum:
 
 ```bash

@@ -1,0 +1,54 @@
+name: sync-upstream
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Check upstream
+        id: check
+        run: |
+          uv run --script scripts/sync-upstream.py check --json > "$RUNNER_TEMP/check.json"
+          behind=$(python3 -c "import json,sys; rows=json.load(open(sys.argv[1])); print(' '.join(r['entry'] for r in rows if r['status'] != 'current'))" "$RUNNER_TEMP/check.json")
+          echo "behind=$behind" >> "$GITHUB_OUTPUT"
+
+      - name: Diff and update
+        if: steps.check.outputs.behind != ''
+        run: |
+          {
+            echo "Upstream moved for: ${{ steps.check.outputs.behind }}"
+            echo
+            echo "Re-read the Translate section of each affected wrapper in skills/*/SKILL.md against the diff below before merging."
+            echo
+            for entry in ${{ steps.check.outputs.behind }}; do
+              echo "## $entry"
+              echo
+              echo '```diff'
+              uv run --script scripts/sync-upstream.py diff "$entry" | head -n 400
+              echo '```'
+              echo
+            done
+          } > "$RUNNER_TEMP/body.md"
+          uv run --script scripts/sync-upstream.py update ${{ steps.check.outputs.behind }}
+
+      - name: Open pull request
+        if: steps.check.outputs.behind != ''
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/upstream-sync
+          commit-message: "chore(upstream): sync ${{ steps.check.outputs.behind }}"
+          title: "chore(upstream): sync vendored skills"
+          body-path: ${{ runner.temp }}/body.md
+          labels: upstream

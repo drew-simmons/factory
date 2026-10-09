@@ -15,14 +15,14 @@ Make the change smaller and plainer while every test keeps passing.
 ## Load
 
 - `${CLAUDE_PLUGIN_ROOT}/upstream/addyosmani-agent-skills/skills/code-simplification/SKILL.md`:
-  the five principles, Chesterton's fence, one change at a time with tests
-  after each.
+  the five principles, Chesterton's fence, one change at a time with tests after
+  each.
 - `${CLAUDE_PLUGIN_ROOT}/upstream/cursor-plugins/cursor-team-kit/skills/deslop/SKILL.md`:
-  the slop list: narrating comments, defensive try/catch, `any` casts,
-  deep nesting.
+  the slop list: narrating comments, defensive try/catch, `any` casts, deep
+  nesting.
 - `${CLAUDE_PLUGIN_ROOT}/upstream/cursor-plugins/pstack/skills/principle-subtract-before-you-add/SKILL.md`
-  and `principle-laziness-protocol/SKILL.md`: delete first, smallest diff,
-  flat call hierarchy.
+  and `principle-laziness-protocol/SKILL.md`: delete first, smallest diff, flat
+  call hierarchy.
 - The smell baseline in
   `${CLAUDE_PLUGIN_ROOT}/upstream/mattpocock-skills/skills/engineering/code-review/SKILL.md`
   (Speculative Generality, Middle Man, Data Clumps, and the rest).
