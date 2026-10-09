@@ -1,0 +1,16 @@
+{
+  "name": "factory-docs",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "dev": "blume dev",
+    "build": "blume build",
+    "preview": "blume preview",
+    "validate": "blume validate --strict",
+    "doctor": "blume doctor"
+  },
+  "dependencies": {
+    "blume": "^2.2.1"
+  }
+}
