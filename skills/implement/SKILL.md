@@ -57,11 +57,9 @@ Single slice (`/factory:implement <NN>`):
 3. For each acceptance check: write one failing test at the agreed seam,
    confirm it fails for the right reason, write the smallest code that
    passes, run the file. One behavior per cycle.
-4. Run the full suite once. Then run `/factory:verify`. If it exits 1, fix
-   only what it names and rerun, up to `max_iterations`. Write
-   `.factory/loop.local.md` first (see `/factory:verify`) so the Stop hook
-   backstops the loop; leave `session_id` blank, the hook then acts for
-   any session.
+4. Run the full suite once. Then run `/factory:verify --loop`, which arms
+   the Stop hook before the first stage. If it exits 1, fix only what it
+   names and rerun, up to `max_iterations`.
 5. Commit the slice together with `<spec_dir>/<slug>/` (spec, plan, and
    any issue files), so the stack carries its own spec and `/factory:pr`
    never meets an untracked plan. Mark the slice done. Reply with the
