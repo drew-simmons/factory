@@ -14,7 +14,9 @@ spec.loader.exec_module(sync)
 
 
 def git(*args: str, cwd: Path) -> str:
-    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout
+    return subprocess.run(
+        ["git", *args], cwd=cwd, check=True, capture_output=True, text=True
+    ).stdout
 
 
 def commit_all(repo: Path, message: str) -> str:
@@ -160,7 +162,9 @@ def test_diff_and_update_apply_upstream_change(project: Path, upstream: Path, ca
 
 def test_update_with_ref_moves_tag_pin(project: Path, upstream: Path):
     run(project, "update", "--force")
-    (upstream / "skills" / "engineering" / "tdd" / "SKILL.md").write_text("---\nname: tdd\n---\nnew\n")
+    (upstream / "skills" / "engineering" / "tdd" / "SKILL.md").write_text(
+        "---\nname: tdd\n---\nnew\n"
+    )
     commit_all(upstream, "v2")
     git("tag", "v2.0.0", cwd=upstream)
     assert run(project, "update", "upstream-repo/tdd", "--ref", "v2.0.0") == 0

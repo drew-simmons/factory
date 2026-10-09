@@ -20,6 +20,7 @@ crap_threshold = 5        # poly-crap --threshold
 coverage = ""             # lcov path when auto-detection fails
 llm = false               # run lawbook model-judged standards on a green tree
 max_iterations = 5        # cap for the implement <-> verify loop
+exclude = []              # shell globs left out of every stage, e.g. ["upstream/*"]
 
 [verify.commands]         # each key overrides the stack default; "" keeps it
 typecheck = ""

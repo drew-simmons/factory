@@ -1,0 +1,28 @@
+{
+  "description": "factory: report tool availability at session start; block a red turn from ending while a verify loop is armed",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\"",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/verify-stop.sh\"",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}

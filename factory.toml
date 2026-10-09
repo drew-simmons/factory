@@ -1,0 +1,11 @@
+[factory]
+spec_dir = "docs/specs"
+base = "origin/main"
+
+[tracker]
+kind = "github"
+
+[verify]
+# Tooling repo: the sync script's argparse handlers sit between 5 and 10.
+crap_threshold = 10
+exclude = ["upstream/*", "evals/*"]
