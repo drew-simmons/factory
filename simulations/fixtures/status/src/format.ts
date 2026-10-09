@@ -1,4 +1,4 @@
-import type { StatusReport } from "./status.js";
+import type { StatusReport } from "./status.ts";
 
 /** The human layout: one labelled line per field, labels padded to the same width. */
 export function formatStatus(report: StatusReport): string {

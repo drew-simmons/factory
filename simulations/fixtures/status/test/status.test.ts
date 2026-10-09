@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { collectStatus } from "../src/status.js";
+import { collectStatus } from "../src/status.ts";
 
 const sources = {
   version: "1.2.3",

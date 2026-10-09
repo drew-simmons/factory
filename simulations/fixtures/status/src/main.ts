@@ -1,4 +1,4 @@
-import { run } from "./cli.js";
+import { run } from "./cli.ts";
 
 const startedAtMs = Date.now();
 
