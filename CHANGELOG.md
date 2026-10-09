@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `explain-diff` skill: a rich, interactive HTML explanation of a change,
+  diff, branch, or PR, with background, intuition, code walkthrough, and a
+  five-question quiz.
+
 ## 0.1.0 (2026-10-08)
 
 First release.

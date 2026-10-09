@@ -56,6 +56,7 @@ SessionStart hook prints which ones are present.
 | `verify` | Floor, typecheck, lint, format, lawbook, tests with coverage, poly-crap, in that order. Fix only what it names until exit 0. | `.verify/` |
 | `pr` | Opens one PR per slice against its parent branch with real evidence. Never draft, never merge. | a PR |
 | `review` | Standards and spec axes in parallel read-only agents, plus CodeRabbit CLI when authenticated. | findings |
+| `explain-diff` | Writes a rich, interactive HTML explanation of a change, diff, branch, or PR with background, intuition, code walkthrough, and quiz. Outside the loop. | `.temp/<date>-explanation-<slug>.html` |
 
 Three skills say in their description that only the user may start them:
 `setup`, `plan` (for publishing), and `pr`. The frontmatter stays within the
