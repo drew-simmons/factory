@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { EXIT_OK, EXIT_USAGE, run } from "../src/cli.js";
+import { EXIT_OK, EXIT_USAGE, run } from "../src/cli.ts";
 
 const sources = { version: "1.2.3", startedAtMs: 0, nowMs: () => 5_000, queueDepth: () => 1 };
 

@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { formatStatus } from "../src/format.js";
+import { formatStatus } from "../src/format.ts";
 
 it("prints one padded label per line", () => {
   const text = formatStatus({ version: "1.2.3", uptimeSeconds: 42, queueDepth: 3 });

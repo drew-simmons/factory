@@ -1,5 +1,5 @@
-import { formatStatus } from "./format.js";
-import { collectStatus, type StatusSources } from "./status.js";
+import { formatStatus } from "./format.ts";
+import { collectStatus, type StatusSources } from "./status.ts";
 
 export interface Output {
   write(text: string): void;
