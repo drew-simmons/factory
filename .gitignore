@@ -7,3 +7,4 @@ coverage.lcov
 .factory/
 .rumdl_cache/
 .ruff_cache/
+evals/results/

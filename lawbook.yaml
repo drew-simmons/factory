@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/drew-simmons/lawbook/main/lawbook.schema.json
+version: 1
+ignore:
+  - "**/node_modules/**"
+  - "**/.git/**"
+  - "upstream/**"
+  - ".venv/**"
+  - "evals/results/**"
+
+rules:
+  - id: has-readme
+    exists: ["README.md"]
+
+  - id: has-license
+    exists: ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+
+  - id: no-env-file
+    absent: [".env", "**/*.pem"]
+
+  - id: skill-cites-upstream
+    description: Every factory skill is a wrapper over vendored method files
+    files: ["skills/*/SKILL.md"]
+    require: '\$\{CLAUDE_PLUGIN_ROOT\}/upstream/'
+    message: the skill does not load any file under upstream/
+
+  - id: skill-under-150-lines
+    description: Keep SKILL.md lean; detail belongs in references/ or upstream/
+    files: ["skills/*/SKILL.md"]
+    require: '(?<![\s\S])(?!(?:[^\n]*\n){150})'
+    message: SKILL.md has 150 lines or more
+
+  - id: portable-frontmatter
+    description: Only the six Agent Skills frontmatter keys are allowed
+    files: ["skills/*/SKILL.md"]
+    forbid: '^(disable-model-invocation|argument-hint|arguments|context|agent|background|model|effort|when_to_use|user-invocable|hooks|paths|shell|disallowed-tools):'
+    message: Claude-only frontmatter key; keep SKILL.md portable
+
+  - id: no-dashes-as-punctuation
+    description: Plain punctuation only in owned prose
+    files: ["skills/**/*.md", "agents/*.md", "README.md", "CHANGELOG.md", "evals/**/*.md"]
+    forbid: '[—–]'
+    message: replace the em or en dash with a period or comma
+
+  - id: hooks-use-plugin-root
+    description: Hook commands must not hardcode paths
+    files: ["hooks/hooks.json"]
+    forbid: '"command": "[^"]*(/Users/|/home/|~/)'
+    message: use ${CLAUDE_PLUGIN_ROOT} in hook commands

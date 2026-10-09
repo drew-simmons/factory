@@ -17,8 +17,8 @@ its own worktree.
 ## Load
 
 - `${CLAUDE_PLUGIN_ROOT}/upstream/mattpocock-skills/skills/engineering/tdd/SKILL.md`:
-  the red-green loop, seams, and anti-patterns. Read `tests.md` beside it
-  before writing a test and `mocking.md` before adding a mock.
+  the red-green loop, seams, and anti-patterns. Read `tests.md` beside it before
+  writing a test and `mocking.md` before adding a mock.
 - `${CLAUDE_PLUGIN_ROOT}/upstream/mattpocock-skills/skills/engineering/implement/SKILL.md`
   and `implement-spec/SKILL.md`: single-ticket flow and the frontier
   orchestration with worktrees.

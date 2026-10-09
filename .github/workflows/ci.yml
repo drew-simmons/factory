@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install poly-crap
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/drew-simmons/poly-crap/releases/latest/download/poly-crap-installer.sh | sh
+
+      - name: Install lawbook and Claude Code
+        run: npm install --global lawbook @anthropic-ai/claude-code
+
+      - name: Vendored upstream matches the manifest
+        run: uv run --script scripts/sync-upstream.py verify
+
+      - name: Tests
+        run: uv run pytest -q --cov --cov-report=lcov:coverage.lcov
+
+      - name: Lint and format
+        run: |
+          uvx ruff check scripts skills/verify/scripts tests
+          uvx ruff format --check scripts skills/verify/scripts tests
+
+      - name: Markdown
+        run: uvx rumdl check README.md CHANGELOG.md skills
+
+      - name: Agent Skills spec
+        run: |
+          for skill in skills/*/; do
+            uvx --from git+https://github.com/agentskills/agentskills#subdirectory=skills-ref skills-ref validate "$skill"
+          done
+
+      - name: Claude Code plugin
+        run: |
+          claude plugin validate .claude-plugin/plugin.json --strict
+          claude plugin validate .claude-plugin/marketplace.json --strict
+          claude plugin validate skills --strict
+          claude plugin validate agents --strict
+
+      - name: lawbook
+        run: lawbook check . --no-llm
+
+      - name: poly-crap on the change
+        if: github.event_name == 'pull_request'
+        run: poly-crap --diff-base "origin/${{ github.base_ref }}" --coverage coverage.lcov --threshold 10 --fail-above
+
+      - name: Upstream drift (informational)
+        continue-on-error: true
+        run: uv run --script scripts/sync-upstream.py check --fail-if-behind

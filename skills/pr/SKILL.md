@@ -22,7 +22,8 @@ reviewer, human or bot.
 - `${CLAUDE_SKILL_DIR}/references/pr-body.md`: the merged body template.
 - With `--babysit`:
   `${CLAUDE_PLUGIN_ROOT}/upstream/cursor-plugins/pstack/skills/poteto-mode/playbooks/babysit.md`
-  and `${CLAUDE_PLUGIN_ROOT}/upstream/coderabbitai-skills/skills/autofix/SKILL.md`.
+  and
+  `${CLAUDE_PLUGIN_ROOT}/upstream/coderabbitai-skills/skills/autofix/SKILL.md`.
 
 ## Translate
 
