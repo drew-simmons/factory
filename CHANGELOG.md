@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.0 (2026-10-09)
+
 - `simulations/`: three end-to-end runs (small bug, medium feature as a
   stack, large feature with parallel waves) that drive every skill through
   headless sessions against fixtures whose `lawbook.yaml` extends the
