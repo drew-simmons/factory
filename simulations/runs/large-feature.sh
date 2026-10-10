@@ -37,6 +37,12 @@ WAVE0=$(sed -n '/^```json$/,/^```$/p' "$PLAN" | sed '1d;$d' | jq -r '.waves[0].s
 stage implement-all "/factory:implement --all" 60
 snap implement-all
 cp -R "$WORK/docs" "$RESULTS/parent-docs" 2>/dev/null
+# The loop is re-entrant from disk: a parent that ended its turn with a slice
+# still building is resumed once, the way a user would resume it.
+if [ "$(committed_slices | wc -l)" -lt "$(slice_count)" ]; then
+  stage implement-all-resume "/factory:implement --all" 60
+  snap implement-all-resume
+fi
 DONE=$(committed_slices | wc -l)
 # A worktree may stay only for a slice that is not committed (kept red on purpose).
 check implement-all "implement released the worktree of every committed slice" test "$(($(git worktree list --porcelain | grep -c '^worktree ') - 1))" -le "$(($(slice_count) - DONE))"
