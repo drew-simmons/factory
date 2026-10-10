@@ -103,6 +103,7 @@ green_matches() {
 pr_count() { in_work gh pr list --state all --json number --jq length; }
 # PRs opened since the run started; the throwaway repo may hold earlier runs.
 PR0=0
+baseline() { PR0=$(pr_count); }
 pr_new() { echo $(($(pr_count) - PR0)); }
 pr_field() { in_work gh pr list --head "$1" --state all --json "$2" --jq ".[0].$2"; }
 issue_count() { in_work gh issue list --label factory --state all --json number --jq length; }

@@ -12,7 +12,7 @@ VERIFY="$FACTORY/skills/verify/scripts/verify.sh"
 sh "$SIM/fixtures/ledger/scaffold.sh" "$WORK" "$REPO" || exit 2
 cd "$WORK" || exit 2
 BASE_SHA=$(git rev-parse HEAD)
-PR0=$(pr_count)
+baseline
 
 stage setup "/factory:setup. I invoked this on purpose. Keep every value already in factory.toml; for anything you would otherwise ask me, take your own recommended answer and continue."
 check setup "factory.toml keeps the github tracker" file_has factory.toml '^kind = "github"'
