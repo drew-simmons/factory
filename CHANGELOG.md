@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- The Stop hook gates every stop until `max_iterations`, not one forced
+  continuation; it blocks without `jq`; it reads the repository from the
+  payload cwd and also runs on SubagentStop, so implementer agents in
+  worktrees are gated on their worktree.
+- `verify.sh` exits 2 on a base ref or slice Parent that does not resolve,
+  on a stage command that is not installed, and on a `factory.toml` it
+  cannot read, instead of falling back to `main` or reporting a failed
+  gate. The green stamp covers the settings that decide the verdict. The
+  root is the work tree around the current directory.
+- poly-crap gates the changed functions only and receives
+  `[verify].exclude`; after a test change the full scan is advisory. The
+  floor compares CRAP thresholds numerically, catches an error-level
+  lawbook rule demoted or deleted, and counts test definitions removed
+  inside a kept file.
+- CI pins tool versions, runs shellcheck and the verify script on this
+  repository, validates both manifests, and reads the CRAP threshold from
+  `factory.toml`. The upstream sync PR updates only entries that are
+  behind and lists new tags for a hand update. Tests cover both hooks and
+  keep the docs in step with the setup reference.
+
 ## 0.4.0 (2026-10-09)
 
 - `simulations/`: three end-to-end runs (small bug, medium feature as a

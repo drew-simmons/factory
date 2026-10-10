@@ -7,12 +7,26 @@ sidebar:
 
 ## Tests
 
-The maintenance tooling (the upstream sync script and the verify script)
-is tested with pytest:
+The scripts are tested with pytest: the verify script end to end on a
+fixture repository, the Stop and SessionStart hooks against a stub verify,
+`factory-config.py`, `release.py`, and `sync-upstream.py`. Shell is
+covered by test count rather than by line coverage, so a new branch in a
+shell script wants a new test.
 
 ```bash
 uv run pytest
 ```
+
+CI also runs the verify script itself on this repository, with the same
+`factory.toml` a user would have, and shellcheck over every shell script.
+Tool versions are pinned at the top of `.github/workflows/ci.yml`.
+
+## Two manifests
+
+`.claude-plugin/plugin.json` is the Claude Code manifest. `plugin.json` at
+the root follows the agent-plugins.org schema so other agent hosts can
+read the same plugin. A test keeps their shared fields identical and the
+release job bumps both versions.
 
 ## Validation
 
@@ -79,3 +93,13 @@ uvx rumdl check --fix docs/content
 
 `factory.toml` points specs at `docs/specs/`, a sibling of `content/`
 outside the site's content root, so specs never become pages.
+
+## Releases
+
+Merging to `main` cuts a release when the commits since the last tag carry
+a `feat` or `fix`; the README has the version rules. The release commit is
+pushed with the workflow's `GITHUB_TOKEN`, which starts no other workflow,
+so it gets no CI run of its own and does not redeploy this site. Run the
+`docs` workflow by hand from the Actions tab after a release that touched
+`docs/`. A personal access token in the release job would close that gap;
+that is the owner's call.

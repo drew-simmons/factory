@@ -21,7 +21,7 @@ coverage = ""             # lcov path when auto-detection fails
 llm = false               # judge lawbook prose standards on a green tree; fail-level ones gate
 max_requests = 50         # cap on model requests per verify run (one per rule per file)
 max_iterations = 5        # cap for the implement <-> verify loop
-exclude = []              # shell globs left out of every stage, e.g. ["upstream/*"]
+exclude = []              # globs left out of every stage and passed to poly-crap, e.g. ["upstream/*"]
 
 [verify.commands]         # each key overrides the stack default; "" keeps it
 typecheck = ""
@@ -42,7 +42,11 @@ The verify script detects the stack from marker files, first match wins.
 | `go.mod` | go | `go vet ./...` | `golangci-lint run` (if present) | `gofmt -l <files>` | `go test -coverprofile=.verify/coverage.out ./...` |
 
 A repo with none of these markers needs `[verify.commands]` filled in, or the
-verify script exits 2.
+verify script exits 2. A command that is not installed also exits 2.
+
+`[verify].exclude` filters the files verify sends to every stage and is
+passed to poly-crap as `--exclude`. lawbook keeps its own `ignore` list in
+`lawbook.yaml`, because it also runs outside verify.
 
 ## Tracker kinds
 

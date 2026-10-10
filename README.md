@@ -106,9 +106,10 @@ and in a live [Hunk](https://github.com/modem-dev/hunk) session when one
 is open.
 
 `/factory:verify --loop` and `/factory:implement` write
-`.factory/loop.local.md`. While it exists, the plugin's Stop hook reruns the
-script when the turn tries to end and blocks on red with the findings, up
-to `max_iterations`. Sessions without that file are never touched.
+`.factory/loop.local.md`. While it exists, the plugin's Stop and SubagentStop
+hooks rerun the script every time the turn tries to end and block on red with
+the findings, up to `max_iterations`. Sessions without that file are never
+touched.
 
 ## Upstream skills
 
@@ -143,6 +144,11 @@ upstream moves, with the diff in the body.
 ```bash
 uv run pytest
 ```
+
+The tests cover the verify script end to end, both hooks, and the
+maintenance scripts. CI also runs shellcheck and the verify script itself on
+this repository. `.claude-plugin/plugin.json` is the Claude Code manifest;
+the root `plugin.json` is the same plugin in the agent-plugins.org schema.
 
 ```bash
 claude plugin validate skills --strict

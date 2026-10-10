@@ -10,7 +10,7 @@ sidebar:
 ```toml
 [factory]
 spec_dir = "docs/specs"   # <spec_dir>/<slug>/{spec.md,plan.md,issues/}
-base = "origin/main"      # branch every diff and stack is measured against
+base = "origin/main"      # root of every stack; a planned slice measures against its Parent
 
 [tracker]
 kind = "github"           # github | gitlab | jira | local
@@ -21,9 +21,10 @@ jira_type = "Task"        # work item type for slices (jira only)
 [verify]
 crap_threshold = 5        # poly-crap --threshold
 coverage = ""             # lcov path when auto-detection fails
-llm = false               # run lawbook model-judged standards on a green tree
+llm = false               # judge lawbook prose standards on a green tree; fail-level ones gate
+max_requests = 50         # cap on model requests per verify run (one per rule per file)
 max_iterations = 5        # cap for the implement <-> verify loop
-exclude = []              # shell globs left out of every stage, e.g. ["upstream/*"]
+exclude = []              # globs left out of every stage and passed to poly-crap, e.g. ["upstream/*"]
 
 [verify.commands]         # each key overrides the stack default; "" keeps it
 typecheck = ""
@@ -50,6 +51,11 @@ The verify script detects the stack from marker files. First match wins.
 For node, `<pm>` follows the lockfile: `pnpm` with `pnpm-lock.yaml`,
 `yarn` with `yarn.lock`, otherwise `npm`. A repo with none of these
 markers needs `[verify.commands]` filled in, or the verify script exits 2.
+A command that is not installed also exits 2.
+
+`[verify].exclude` filters the files verify sends to every stage and is
+passed to poly-crap as `--exclude`. lawbook keeps its own `ignore` list in
+`lawbook.yaml`, because it also runs outside verify.
 
 ## Tracker kinds
 
