@@ -159,7 +159,9 @@ def test_continuation_forced_by_this_hook_still_blocks_while_red(repo: Path, plu
     assert iteration_of(state) == 2
 
 
-def test_payload_cwd_wins_over_the_hooks_working_directory(repo: Path, plugin: Path, tmp_path: Path):
+def test_payload_cwd_wins_over_the_hooks_working_directory(
+    repo: Path, plugin: Path, tmp_path: Path
+):
     # A worktree agent's stop carries the worktree as cwd; the hook must gate that tree.
     state = arm(repo)
     elsewhere = tmp_path / "elsewhere"
