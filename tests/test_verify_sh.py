@@ -72,10 +72,33 @@ def repo(tmp_path: Path) -> Path:
     return repo
 
 
-def run_verify(repo: Path, **env: str) -> subprocess.CompletedProcess:
-    full_env = {**os.environ, "HUNK": "0", **env}
+# verify.sh reads these from the environment; a test must not inherit them from
+# the shell that runs pytest (CI runs this suite inside verify.sh itself).
+OVERRIDES = (
+    "BASE",
+    "THRESHOLD",
+    "VERIFY_LLM_OVERRIDE",
+    "MAX_REQUESTS",
+    "LAWBOOK_CONFIG",
+    "CLAUDE_PROJECT_DIR",
+)
+
+
+def clean_env(**env: str) -> dict[str, str]:
+    base = {k: v for k, v in os.environ.items() if k not in OVERRIDES}
+    return {**base, "HUNK": "0", **env}
+
+
+def run_verify(
+    repo: Path, *args: str, cwd: Path | None = None, **env: str
+) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["sh", str(VERIFY)], cwd=repo, env=full_env, capture_output=True, text=True, check=False
+        ["sh", str(VERIFY), *args],
+        cwd=cwd or repo,
+        env=clean_env(**env),
+        capture_output=True,
+        text=True,
+        check=False,
     )
 
 
@@ -170,14 +193,7 @@ def test_loop_flag_arms_the_stop_hook_state_file(repo: Path):
         TEST.replace("from fixture import add", "from fixture import add, sub")
         + "\n\ndef test_sub():\n    assert sub(3, 1) == 2\n"
     )
-    result = subprocess.run(
-        ["sh", str(VERIFY), "--loop"],
-        cwd=repo,
-        env={**os.environ, "HUNK": "0"},
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = run_verify(repo, "--loop")
     assert result.returncode == 0, result.stdout + result.stderr
     state = (repo / ".factory" / "loop.local.md").read_text()
     assert "iteration: 0" in state
@@ -290,14 +306,7 @@ def test_verify_from_a_worktree_measures_the_worktree(repo: Path, tmp_path: Path
     git("worktree", "add", "-q", "-b", "slice", str(worktree), "main", cwd=repo)
     suppression = "# " + "noqa"
     (worktree / "src" / "fixture.py").write_text(MODULE + f"import os  {suppression}\n")
-    result = subprocess.run(
-        ["sh", str(VERIFY)],
-        cwd=worktree,
-        env={**os.environ, "HUNK": "0", "CLAUDE_PROJECT_DIR": str(repo)},
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = run_verify(repo, cwd=worktree, CLAUDE_PROJECT_DIR=str(repo))
     assert result.returncode == 1, result.stdout + result.stderr
     assert "FLOOR new suppression" in result.stdout
     assert (worktree / ".verify" / "summary.txt").is_file()

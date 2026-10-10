@@ -11,7 +11,8 @@ exclude = [
     "upstream/**",
     "evals/results/**",
 ]
-disable = ["MD036"]
+# MD041: agent and eval prompts open with frontmatter and no heading on purpose.
+disable = ["MD036", "MD041"]
 
 [MD013]
 code-blocks = false

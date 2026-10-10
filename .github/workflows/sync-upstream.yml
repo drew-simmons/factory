@@ -21,8 +21,10 @@ jobs:
         id: check
         run: |
           uv run --script scripts/sync-upstream.py check --json > "$RUNNER_TEMP/check.json"
-          behind=$(python3 -c "import json,sys; rows=json.load(open(sys.argv[1])); print(' '.join(r['entry'] for r in rows if r['status'] != 'current'))" "$RUNNER_TEMP/check.json")
+          behind=$(python3 -c "import json,sys; rows=json.load(open(sys.argv[1])); print(' '.join(r['entry'] for r in rows if r['status'] == 'behind'))" "$RUNNER_TEMP/check.json")
+          tags=$(python3 -c "import json,sys; rows=json.load(open(sys.argv[1])); print(' '.join(f\"{r['entry']}@{r['newerTags'][-1]}\" for r in rows if r['status'] == 'tag-available'))" "$RUNNER_TEMP/check.json")
           echo "behind=$behind" >> "$GITHUB_OUTPUT"
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
 
       - name: Diff and update
         if: steps.check.outputs.behind != ''
@@ -40,6 +42,15 @@ jobs:
               echo '```'
               echo
             done
+            if [ -n "${{ steps.check.outputs.tags }}" ]; then
+              echo "## New tags, not applied"
+              echo
+              echo "An entry pinned to a branch moves with it; an entry pinned to a tag moves only by hand, with \`sync-upstream.py update <entry> --ref <tag>\`:"
+              echo
+              for pair in ${{ steps.check.outputs.tags }}; do
+                echo "- ${pair%@*}: ${pair#*@}"
+              done
+            fi
           } > "$RUNNER_TEMP/body.md"
           uv run --script scripts/sync-upstream.py update ${{ steps.check.outputs.behind }}
 

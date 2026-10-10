@@ -6,12 +6,11 @@
 set -u
 . "$SIM/lib.sh"
 REPO=${SIM_REPO:-drew-simmons/factory-sim-ledger}
-VERIFY="$FACTORY/skills/verify/scripts/verify.sh"
 
 sh "$SIM/fixtures/ledger/scaffold.sh" "$WORK" "$REPO" || exit 2
 cd "$WORK" || exit 2
 BASE_SHA=$(git rev-parse HEAD)
-PR0=$(pr_count)
+baseline
 
 stage spec "/factory:spec Feature: a monthly statement. \`ledger statement <file> --month 2026-09\` prints every transaction posted in that month grouped by category, each group with its subtotal, then the month's closing balance. \`ledger balance <file>\` gains --since and --until date filters (inclusive) that limit which transactions count. Amounts keep the half-up cent rounding the README describes. Dates are ISO; a bad month or date is a usage error."
 reply spec-agree "Take your recommended answer for every open question, update the spec file accordingly, clear the open questions section, and set Status: agreed."

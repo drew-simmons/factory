@@ -8,6 +8,13 @@ on:
 permissions:
   contents: read
 
+# Tool pins live here, in one place. Bump them on purpose, in their own PR.
+env:
+  POLY_CRAP_VERSION: v0.8.2
+  LAWBOOK_VERSION: 0.3.1
+  CLAUDE_CODE_VERSION: 2.1.296
+  SKILLS_REF_COMMIT: 69ef37e9424c0a7ea9dd2293b559e43ec8176379
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -23,10 +30,10 @@ jobs:
           node-version: 22
 
       - name: Install poly-crap
-        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/drew-simmons/poly-crap/releases/latest/download/poly-crap-installer.sh | sh
+        run: curl --proto '=https' --tlsv1.2 -LsSf "https://github.com/drew-simmons/poly-crap/releases/download/${POLY_CRAP_VERSION}/poly-crap-installer.sh" | sh
 
       - name: Install lawbook and Claude Code
-        run: npm install --global lawbook @anthropic-ai/claude-code
+        run: npm install --global "lawbook@${LAWBOOK_VERSION}" "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
 
       - name: Vendored upstream matches the manifest
         run: uv run --script scripts/sync-upstream.py verify
@@ -39,21 +46,25 @@ jobs:
 
       - name: Lint and format
         run: |
-          uvx ruff check scripts skills/verify/scripts tests
-          uvx ruff format --check scripts skills/verify/scripts tests
+          uvx ruff check scripts skills tests
+          uvx ruff format --check scripts skills tests
+
+      - name: Shell
+        run: uvx --from shellcheck-py shellcheck -S warning -x hooks/*.sh skills/*/scripts/*.sh simulations/*.sh simulations/runs/*.sh simulations/fixtures/*/scaffold.sh evals/*/scaffold.sh
 
       - name: Markdown
-        run: uvx rumdl check README.md CHANGELOG.md skills docs/content
+        run: uvx rumdl check README.md CHANGELOG.md skills agents evals simulations docs/content docs/specs
 
       - name: Agent Skills spec
         run: |
           for skill in skills/*/; do
-            uvx --from git+https://github.com/agentskills/agentskills#subdirectory=skills-ref skills-ref validate "$skill"
+            uvx --from "git+https://github.com/agentskills/agentskills@${SKILLS_REF_COMMIT}#subdirectory=skills-ref" skills-ref validate "$skill"
           done
 
       - name: Claude Code plugin
         run: |
           claude plugin validate .claude-plugin/plugin.json --strict
+          claude plugin validate plugin.json --strict
           claude plugin validate .claude-plugin/marketplace.json --strict
           claude plugin validate skills --strict
           claude plugin validate agents --strict
@@ -61,9 +72,12 @@ jobs:
       - name: lawbook
         run: lawbook check . --no-llm
 
-      - name: poly-crap on the change
-        if: github.event_name == 'pull_request'
-        run: poly-crap --diff-base "origin/${{ github.base_ref }}" --coverage coverage.lcov --threshold 10 --fail-above
+      - name: The verify loop, on this repository
+        # The same gate the plugin applies to its users, with the same
+        # factory.toml. On a push to main the diff is empty and it says so.
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'origin/main' }}
+        run: sh skills/verify/scripts/verify.sh
 
       - name: Upstream drift (informational)
         continue-on-error: true
