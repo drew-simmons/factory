@@ -30,8 +30,10 @@ owns the fixes.
 
 ## The loop
 
-1. Run `sh ${CLAUDE_SKILL_DIR}/scripts/verify.sh`. `BASE=<ref>` overrides
-   the base from `factory.toml`.
+1. Run `sh ${CLAUDE_SKILL_DIR}/scripts/verify.sh` as the whole command:
+   nothing piped to `tail`, no `; echo $?` after it. The tool result
+   carries the exit code and the output. `BASE=<ref>` before the command
+   overrides the base from `factory.toml`.
 2. Read the exit code.
    - 0: clean. The script wrote `.verify/green`. Stop.
    - 1: a gate failed. Read `.verify/summary.txt`, `.verify/crap.json`, and
@@ -81,6 +83,12 @@ write the file by hand.
 
 ## Rules
 
+- Shell discipline: one command per Bash call, with no `&&`, `;`, pipes,
+  redirects, or `$(...)`. A tool grant matches the command word, so a
+  compound command is denied whole, and one denied command is not a denied
+  tool: retry with a single, simpler command. Read exit codes and output
+  from the tool result. Create and edit files with the Write and Edit
+  tools, never a shell heredoc.
 - A function fails when its CRAP score is above the threshold. At full
   coverage the score equals the complexity, so a complex function fails
   even when fully tested. Fix with tests for uncovered branches, a split,

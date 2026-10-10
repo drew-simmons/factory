@@ -38,6 +38,12 @@ Make the change smaller and plainer while every test keeps passing.
 
 ## Factory rules
 
+- Shell discipline: one command per Bash call, with no `&&`, `;`, pipes,
+  redirects, or `$(...)`. A tool grant matches the command word, so a
+  compound command is denied whole, and one denied command is not a denied
+  tool: retry with a single, simpler command. Read exit codes and output
+  from the tool result. Create and edit files with the Write and Edit
+  tools, never a shell heredoc.
 - Behavior stays identical: same outputs, errors, side effects, and order.
   Existing tests pass without edits. When unsure, do not make the change.
 - Touch only lines the change introduced. No drive-by refactors.

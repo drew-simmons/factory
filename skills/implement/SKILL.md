@@ -38,6 +38,12 @@ its own worktree.
 
 ## Factory rules
 
+- Shell discipline: one command per Bash call, with no `&&`, `;`, pipes,
+  redirects, or `$(...)`. A tool grant matches the command word, so a
+  compound command is denied whole, and one denied command is not a denied
+  tool: retry with a single, simpler command. Read exit codes and output
+  from the tool result. Create and edit files with the Write and Edit
+  tools, never a shell heredoc.
 - Read `factory.toml` for `base` and `[verify].max_iterations`.
 - Typecheck and run the single test file often; run the full suite once
   before verify. Use the project's package manager (pnpm, uv, cargo, go).

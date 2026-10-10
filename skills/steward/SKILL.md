@@ -34,6 +34,12 @@ human's call begins.
 
 ## Factory rules
 
+- Shell discipline: one command per Bash call, with no `&&`, `;`, pipes,
+  redirects, or `$(...)`. A tool grant matches the command word, so a
+  compound command is denied whole, and one denied command is not a denied
+  tool: retry with a single, simpler command. Read exit codes and output
+  from the tool result. Create and edit files with the Write and Edit
+  tools, never a shell heredoc.
 - Read `plan.md` (the one whose stack holds the current branch, or the path
   the user passes). Run `sh ${CLAUDE_SKILL_DIR}/scripts/stack-status.sh
   <plan.md>` first and after every push; it prints one row per slice and

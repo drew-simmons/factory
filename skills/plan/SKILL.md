@@ -37,6 +37,12 @@ parallel worktrees, each landing as one PR in a stack.
 
 ## Factory rules
 
+- Shell discipline: one command per Bash call, with no `&&`, `;`, pipes,
+  redirects, or `$(...)`. A tool grant matches the command word, so a
+  compound command is denied whole, and one denied command is not a denied
+  tool: retry with a single, simpler command. Read exit codes and output
+  from the tool result. Create and edit files with the Write and Edit
+  tools, never a shell heredoc.
 - Read `factory.toml` for `spec_dir`, `base`, and `[tracker]`. Without a
   tracker kind, default to `local` and say so.
 - Refuse to plan from a spec whose `Status` is not `agreed`; point at

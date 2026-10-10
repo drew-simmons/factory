@@ -15,7 +15,7 @@ BASE_SHA=$(git rev-parse HEAD)
 baseline
 
 stage setup "/factory:setup. I invoked this on purpose. Keep every value already in factory.toml; for anything you would otherwise ask me, take your own recommended answer and continue."
-check setup "factory.toml keeps the github tracker" file_has factory.toml '^kind = "github"'
+check setup "factory.toml keeps its tracker kind" file_has factory.toml "^kind = \"$(tracker_kind)\""
 check setup "factory.toml keeps llm = true" file_has factory.toml '^llm = true'
 check setup ".verify/ and .factory/ are ignored" sh -c "grep -q '^\.verify/' '$WORK/.gitignore' && grep -q '^\.factory/' '$WORK/.gitignore'"
 check setup "setup committed nothing" test "$(git rev-parse HEAD)" = "$BASE_SHA"

@@ -34,6 +34,12 @@ other, and hand them back without touching the code.
 
 ## Factory rules
 
+- Shell discipline: one command per Bash call, with no `&&`, `;`, pipes,
+  redirects, or `$(...)`. A tool grant matches the command word, so a
+  compound command is denied whole, and one denied command is not a denied
+  tool: retry with a single, simpler command. Read exit codes and output
+  from the tool result. Create and edit files with the Write and Edit
+  tools, never a shell heredoc.
 - Edits nothing but the review file below. No code edits, commits,
   pushes, or review comments. Fixes go through `/factory:implement <NN>
   --from-review` or `/factory:simplify`.
