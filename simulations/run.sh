@@ -14,17 +14,23 @@
 # session, SIM_MODEL the model, SIM_STAGE_TIMEOUT the seconds per session
 # (default 1800), SIM_ISOLATE=0 lets sessions see the user's own Claude
 # config. gh needs a token: GH_TOKEN when set, else the pass entry named by
-# SIM_GH_PASS_ENTRY (default Personal/GITHUB_TOKEN).
+# SIM_GH_PASS_ENTRY (default Personal/GITHUB_TOKEN). SIM_FORGE=0 runs without
+# GitHub: a local bare origin, a local tracker, and every stage or check that
+# needs the forge (issues, PRs) recorded as skipped.
 set -u
 
 SIM=$(cd "$(dirname "$0")" && pwd)
 FACTORY=$(cd "$SIM/.." && pwd)
 RUN=${1:?usage: run.sh <small-bug|medium-feature|large-feature>}
 [ -f "$SIM/runs/$RUN.sh" ] || { echo "run.sh: no run named $RUN" >&2; exit 2; }
-for tool in claude gh jq uuidgen poly-crap lawbook uv pnpm timeout column comm python3; do
+for tool in claude jq uuidgen poly-crap lawbook uv pnpm timeout column comm python3; do
   command -v "$tool" >/dev/null 2>&1 || { echo "run.sh: $tool is not installed" >&2; exit 2; }
 done
-if [ -z "${GH_TOKEN:-}" ]; then
+if [ "${SIM_FORGE:-1}" = "0" ]; then
+  :
+elif ! command -v gh >/dev/null 2>&1; then
+  echo "run.sh: gh is not installed (SIM_FORGE=0 runs without it)" >&2; exit 2
+elif [ -z "${GH_TOKEN:-}" ]; then
   command -v pass >/dev/null 2>&1 || { echo "run.sh: set GH_TOKEN (pass is not installed)" >&2; exit 2; }
   GH_TOKEN=$(pass show "${SIM_GH_PASS_ENTRY:-Personal/GITHUB_TOKEN}") || { echo "run.sh: no GitHub token" >&2; exit 2; }
   export GH_TOKEN

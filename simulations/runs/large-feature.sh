@@ -28,9 +28,9 @@ check plan "plan has a valid waves block" waves_valid "${PLAN:-/dev/null}"
 check plan "plan has at least three slices" test "$(grep -c '^### 0[0-9] ' "${PLAN:-/dev/null}")" -ge 3
 check plan "wave 0 holds at least two slices" sh -c "sed -n '/^\`\`\`json$/,/^\`\`\`$/p' '$PLAN' | sed '1d;\$d' | jq -e '.waves[0].slices | length >= 2'"
 check plan "plan has at least two waves" sh -c "sed -n '/^\`\`\`json$/,/^\`\`\`$/p' '$PLAN' | sed '1d;\$d' | jq -e '.waves | length >= 2'"
-check plan "every slice has a Tracker url" test "$(grep -Ec '^- Tracker: <?https://github.com/' "$PLAN")" -eq "$(slice_count)"
+check plan "every slice has a Tracker line" tracker_lines_filled "${PLAN:-/dev/null}"
 check plan "plan-check accepts the plan (no diamond)" plan_checks_out "${PLAN:-/dev/null}"
-check plan "a tracking issue and one issue per slice carry the factory label" test "$(issue_new)" -gt "$(slice_count)"
+check plan "the plan was published to the tracker" tracker_published "${PLAN:-/dev/null}" "$(($(slice_count) + 1))"
 SLICES=$(slice_ids)
 WAVE0=$(sed -n '/^```json$/,/^```$/p' "$PLAN" | sed '1d;$d' | jq -r '.waves[0].slices[]')
 
@@ -74,17 +74,17 @@ check simplify "tests are untouched by simplify" sh -c "[ -z \"\$(git status --p
 check simplify "verify is green after simplify" green_matches
 check simplify "simplify committed its own change" tracked_clean
 
-stage pr-stack "/factory:pr --stack. I invoked this on purpose; open one PR per slice of the plan, each against its parent." 30
-check pr-stack "one PR per slice exists" test "$(pr_new)" = "$(slice_count)"
+forge_stage pr-stack "/factory:pr --stack. I invoked this on purpose; open one PR per slice of the plan, each against its parent." 30
+forge_check pr-stack "one PR per slice exists" test "$(pr_new)" = "$(slice_count)"
 for id in $SLICES; do
   b=$(slice_branch "$id")
   p=$(slice_parent "$id")
-  check pr-stack "PR $id targets its parent $p" test "$(pr_field "$b" baseRefName)" = "$p"
-  check pr-stack "PR $id is not a draft" test "$(pr_field "$b" isDraft)" = false
-  check pr-stack "PR $id body carries the stack table" sh -c "gh pr list --head '$b' --state all --json body --jq '.[0].body' | grep -q '## Stack'"
-  check pr-stack "slice $id branch is on the remote" remote_branch_exists "$b"
+  forge_check pr-stack "PR $id targets its parent $p" test "$(pr_field "$b" baseRefName)" = "$p"
+  forge_check pr-stack "PR $id is not a draft" test "$(pr_field "$b" isDraft)" = false
+  forge_check pr-stack "PR $id body carries the stack table" sh -c "gh pr list --head '$b' --state all --json body --jq '.[0].body' | grep -q '## Stack'"
+  forge_check pr-stack "slice $id branch is on the remote" remote_branch_exists "$b"
 done
-gh pr list --state all --json number,url,baseRefName,headRefName,isDraft,title,body >"$RESULTS/prs.json"
+[ "$FORGE" = 1 ] && gh pr list --state all --json number,url,baseRefName,headRefName,isDraft,title,body >"$RESULTS/prs.json"
 git switch -q "$LAST_BRANCH"
 HEAD_BEFORE=$(git rev-parse HEAD)
 

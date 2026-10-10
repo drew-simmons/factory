@@ -28,6 +28,9 @@ if [ "${SIM_APPEND:-0}" != "1" ]; then
 fi
 BUDGET=${SIM_BUDGET:-10}
 MODEL=${SIM_MODEL:-}
+# SIM_FORGE=0: no GitHub. Stages and checks that need the forge are recorded
+# as skipped, so a run still exits 0 when everything it could test passed.
+FORGE=${SIM_FORGE:-1}
 STAGE_TIMEOUT=${SIM_STAGE_TIMEOUT:-1800}
 ALLOWED='Bash(git *) Bash(gh *) Bash(sh *) Bash(uv *) Bash(uvx *) Bash(pnpm *) Bash(npx *) Bash(poly-crap *) Bash(lawbook *) Bash(coderabbit *) Bash(cr *) Bash(jq *) Bash(python3 *) Bash(node *) Bash(cat *) Bash(ls *) Bash(mkdir *) Bash(cp *) Bash(mv *) Bash(rm *) Bash(sed *) Bash(grep *) Bash(wc *) Bash(head *) Bash(tail *) Bash(diff *) Bash(echo *) Bash(printf *) Bash(test *) Bash(true) Read Edit Write Glob Grep Agent Skill TodoWrite'
 SESSION=
@@ -105,6 +108,17 @@ check() {
   printf '%s\t%s\t%s\n' "$status" "$stage_name" "$text" | tee -a "$CHECKS"
 }
 
+# forge_check and forge_stage: as check and stage with the forge, skipped without.
+forge_check() {
+  if [ "$FORGE" = 1 ]; then check "$@"; else printf 'skip\t%s\t%s (no forge)\n' "$1" "$2" | tee -a "$CHECKS"; fi
+}
+forge_stage() {
+  if [ "$FORGE" = 1 ]; then stage "$@"; return $?; fi
+  printf '\n== %s/%s skipped (no forge)\n' "$RUN" "$1"
+  printf '%s\tskip\t-\t-\t-\t0\t-\tno-forge\n' "$1" >>"$STAGES"
+  return 0
+}
+
 snap() {
   rm -rf "$RESULTS/$1.verify" "$RESULTS/$1.factory"
   [ -d "$WORK/.verify" ] && cp -R "$WORK/.verify" "$RESULTS/$1.verify"
@@ -132,7 +146,7 @@ issue_count() { in_work gh issue list --label factory --state all --json number 
 # earlier runs. Call baseline once, after the scaffold.
 PR0=0
 ISSUE0=0
-baseline() { PR0=$(pr_count); ISSUE0=$(issue_count); }
+baseline() { [ "$FORGE" = 1 ] || return 0; PR0=$(pr_count); ISSUE0=$(issue_count); }
 pr_new() { echo $(($(pr_count) - PR0)); }
 issue_new() { echo $(($(issue_count) - ISSUE0)); }
 pr_field() { in_work gh pr list --head "$1" --state all --json "$2" --jq ".[0].$2"; }
@@ -150,6 +164,19 @@ slice_count() { grep -Ec '^### [0-9][0-9] ' "$(plan_path)"; }
 slice_ids() { grep -E '^### [0-9][0-9] ' "$(plan_path)" | awk '{print $2}'; }
 slice_branch() { sed -n "/^### $1 /,/^### /{ s/^- Branch: *//p; }" "$(plan_path)" | head -n 1; }
 slice_parent() { sed -n "/^### $1 /,/^### /{ s/^- Parent: *//p; }" "$(plan_path)" | head -n 1 | sed 's|^origin/||'; }
+# tracker_lines_filled: every slice has a Tracker line, a URL with the forge, a path without.
+tracker_lines_filled() {
+  if [ "$FORGE" = 1 ]; then pattern='^- Tracker: <?https://'; else pattern='^- Tracker: \S'; fi
+  [ "$(grep -Ec "$pattern" "$1")" -eq "$(grep -Ec '^### [0-9][0-9] ' "$1")" ]
+}
+# issue_files_published: without the forge, the plan wrote one issue file per slice.
+issue_files_published() {
+  [ "$(ls "$(dirname "$1")"/issues/*.md 2>/dev/null | wc -l)" -ge "$(grep -Ec '^### [0-9][0-9] ' "$1")" ]
+}
+# tracker_published: issues on the forge, or issue files without it.
+tracker_published() {
+  if [ "$FORGE" = 1 ]; then [ "$(issue_new)" -ge "$2" ]; else issue_files_published "$1"; fi
+}
 # review_has <NN> <section>: the review handoff file has that axis section.
 review_has() { grep -q "^## $2" "$(review_path "$1")"; }
 
@@ -159,7 +186,7 @@ summary() {
   printf '\n== %s checks\n' "$RUN"
   column -t -s "$(printf '\t')" "$CHECKS"
   failed=$(grep -c '^FAIL' "$CHECKS")
-  printf '\n%s pass, %s fail\n' "$(grep -c '^pass' "$CHECKS")" "$failed"
+  printf '\n%s pass, %s fail, %s skipped\n' "$(grep -c '^pass' "$CHECKS")" "$failed" "$(grep -c '^skip' "$CHECKS")"
   [ "$failed" -eq 0 ]
 }
 
