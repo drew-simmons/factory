@@ -36,10 +36,10 @@ PLAN=$(plan_path)
 check plan "plan.md exists beside the spec" test -n "$PLAN"
 check plan "plan has a valid waves block" waves_valid "${PLAN:-/dev/null}"
 check plan "every slice has a Branch and a Parent" sh -c "[ \$(grep -c '^- Branch: ' '$PLAN') -ge 1 ] && [ \$(grep -c '^- Branch: ' '$PLAN') -eq \$(grep -c '^- Parent: ' '$PLAN') ]"
-check plan "every slice has a Tracker url" sh -c "[ \$(grep -Ec '^- Tracker: <?https://github.com/' '$PLAN') -eq \$(grep -c '^- Branch: ' '$PLAN') ]"
+check plan "every slice has a Tracker line" tracker_lines_filled "${PLAN:-/dev/null}"
 check plan "plan-check accepts the plan" plan_checks_out "${PLAN:-/dev/null}"
-check plan "a tracking issue and one issue per slice carry the factory label" test "$(issue_new)" -ge 2
-check plan "no PR was opened by planning" test "$(pr_new)" = 0
+check plan "the plan was published to the tracker" tracker_published "${PLAN:-/dev/null}" 2
+forge_check plan "no PR was opened by planning" test "$(pr_new)" = 0
 BRANCH=$(slice_branch 01)
 PARENT=$(slice_parent 01)
 
@@ -54,7 +54,7 @@ check implement "a test file changed" sh -c "git diff --name-only '$BASE_SHA' --
 check implement "the fix landed in money.py" sh -c "git diff '$BASE_SHA' -- src/ledger/money.py | grep -q '^+.*ROUND_HALF_UP'"
 check implement "verify stamped the tree green" green_matches
 check implement "the Stop hook ran and disarmed the loop" sh -c "test -f '$WORK/.verify/stop.log' && test ! -f '$WORK/.factory/loop.local.md'"
-check implement "no PR was opened by implement" test "$(pr_new)" = 0
+forge_check implement "no PR was opened by implement" test "$(pr_new)" = 0
 TESTS_BEFORE=$(git rev-parse HEAD:tests)
 HEAD_BEFORE=$(git rev-parse HEAD)
 
@@ -112,14 +112,14 @@ git branch -q -D probe-crap
 rm -rf .verify
 sh "$VERIFY" >/dev/null 2>&1
 
-stage pr "/factory:pr. I invoked this on purpose; open the PR for the current slice." 12
-check pr "exactly one PR exists" test "$(pr_new)" = 1
-check pr "PR targets the slice parent" test "$(pr_field "$BRANCH" baseRefName)" = "$PARENT"
-check pr "PR is not a draft" test "$(pr_field "$BRANCH" isDraft)" = false
-check pr "PR body carries verify evidence" sh -c "gh pr list --head '$BRANCH' --state all --json body --jq '.[0].body' | grep -Eq 'exit 0|Verification'"
-check pr "PR body mentions the tracker item" sh -c "gh pr list --head '$BRANCH' --state all --json body --jq '.[0].body' | grep -Eq '#[0-9]+|issues/[0-9]+'"
-check pr "slice branch is on the remote" remote_branch_exists "$BRANCH"
-gh pr list --head "$BRANCH" --state all --json number,url,baseRefName,isDraft,title,body >"$RESULTS/prs.json"
+forge_stage pr "/factory:pr. I invoked this on purpose; open the PR for the current slice." 12
+forge_check pr "exactly one PR exists" test "$(pr_new)" = 1
+forge_check pr "PR targets the slice parent" test "$(pr_field "$BRANCH" baseRefName)" = "$PARENT"
+forge_check pr "PR is not a draft" test "$(pr_field "$BRANCH" isDraft)" = false
+forge_check pr "PR body carries verify evidence" sh -c "gh pr list --head '$BRANCH' --state all --json body --jq '.[0].body' | grep -Eq 'exit 0|Verification'"
+forge_check pr "PR body mentions the tracker item" sh -c "gh pr list --head '$BRANCH' --state all --json body --jq '.[0].body' | grep -Eq '#[0-9]+|issues/[0-9]+'"
+forge_check pr "slice branch is on the remote" remote_branch_exists "$BRANCH"
+[ "$FORGE" = 1 ] && gh pr list --head "$BRANCH" --state all --json number,url,baseRefName,isDraft,title,body >"$RESULTS/prs.json"
 HEAD_BEFORE=$(git rev-parse HEAD)
 
 stage review "/factory:review" 12
@@ -129,6 +129,6 @@ check review "review file has the Spec axis" review_has 01 Spec
 check review "review file has the CodeRabbit axis" review_has 01 CodeRabbit
 check review "review edited nothing but its file" sh -c "[ -z \"\$(git status --porcelain | grep -v 'review-01.md')\" ]"
 check review "review committed nothing" test "$(git rev-parse HEAD)" = "$HEAD_BEFORE"
-check review "review posted no PR comment" sh -c "[ \$(gh pr view '$BRANCH' --json comments --jq '.comments | length') -eq 0 ]"
+forge_check review "review posted no PR comment" sh -c "[ \$(gh pr view '$BRANCH' --json comments --jq '.comments | length') -eq 0 ]"
 
 summary

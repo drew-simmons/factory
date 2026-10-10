@@ -33,9 +33,9 @@ check plan "plan has a valid waves block" waves_valid "${PLAN:-/dev/null}"
 check plan "plan has two slices" test "$(grep -c '^### 0[0-9] ' "${PLAN:-/dev/null}")" = 2
 check plan "slice 02 is blocked by 01" sh -c "sed -n '/^### 02 /,/^### /p' '$PLAN' | grep -Eq '^- Blocked by: *01'"
 check plan "slice 02 stacks on slice 01's branch" test "$(slice_parent 02)" = "$(slice_branch 01)"
-check plan "every slice has a Tracker url" sh -c "[ \$(grep -Ec '^- Tracker: <?https://github.com/' '$PLAN') -eq 2 ]"
+check plan "every slice has a Tracker line" tracker_lines_filled "${PLAN:-/dev/null}"
 check plan "plan-check accepts the plan" plan_checks_out "${PLAN:-/dev/null}"
-check plan "a tracking issue and one issue per slice carry the factory label" test "$(issue_new)" -ge 3
+check plan "the plan was published to the tracker" tracker_published "${PLAN:-/dev/null}" 3
 B1=$(slice_branch 01)
 B2=$(slice_branch 02)
 P1=$(slice_parent 01)
@@ -54,11 +54,11 @@ check implement-01 "test stage ran pnpm test" grep -q 'pnpm test' "$WORK/.verify
 check implement-01 "poly-crap found the vitest lcov" grep -q 'no changed function scores above' "$WORK/.verify/summary.txt"
 S1=$(git rev-parse HEAD)
 
-stage pr-01 "/factory:pr. I invoked this on purpose; open the PR for slice 01." 12
-check pr-01 "one PR exists" test "$(pr_new)" = 1
-check pr-01 "PR 01 targets main" test "$(pr_field "$B1" baseRefName)" = "$P1"
-check pr-01 "PR 01 is not a draft" test "$(pr_field "$B1" isDraft)" = false
-check pr-01 "PR 01 body carries verify evidence" sh -c "gh pr list --head '$B1' --state all --json body --jq '.[0].body' | grep -Eq 'exit 0|Verification'"
+forge_stage pr-01 "/factory:pr. I invoked this on purpose; open the PR for slice 01." 12
+forge_check pr-01 "one PR exists" test "$(pr_new)" = 1
+forge_check pr-01 "PR 01 targets main" test "$(pr_field "$B1" baseRefName)" = "$P1"
+forge_check pr-01 "PR 01 is not a draft" test "$(pr_field "$B1" isDraft)" = false
+forge_check pr-01 "PR 01 body carries verify evidence" sh -c "gh pr list --head '$B1' --state all --json body --jq '.[0].body' | grep -Eq 'exit 0|Verification'"
 
 stage implement-02 "/factory:implement 02" 18
 snap implement-02
@@ -78,12 +78,12 @@ check simplify "tests are untouched by simplify" sh -c "[ -z \"\$(git status --p
 check simplify "verify is green after simplify" green_matches
 check simplify "simplify committed its own change" tracked_clean
 
-stage pr-02 "/factory:pr. I invoked this on purpose; open the PR for slice 02." 12
-check pr-02 "two PRs exist" test "$(pr_new)" = 2
-check pr-02 "PR 02 targets slice 01's branch" test "$(pr_field "$B2" baseRefName)" = "$B1"
-check pr-02 "PR 02 is not a draft" test "$(pr_field "$B2" isDraft)" = false
-check pr-02 "PR 02 body names its parent PR or branch" sh -c "gh pr list --head '$B2' --state all --json body --jq '.[0].body' | grep -q '$B1'"
-gh pr list --state all --json number,url,baseRefName,headRefName,isDraft,title,body >"$RESULTS/prs.json"
+forge_stage pr-02 "/factory:pr. I invoked this on purpose; open the PR for slice 02." 12
+forge_check pr-02 "two PRs exist" test "$(pr_new)" = 2
+forge_check pr-02 "PR 02 targets slice 01's branch" test "$(pr_field "$B2" baseRefName)" = "$B1"
+forge_check pr-02 "PR 02 is not a draft" test "$(pr_field "$B2" isDraft)" = false
+forge_check pr-02 "PR 02 body names its parent PR or branch" sh -c "gh pr list --head '$B2' --state all --json body --jq '.[0].body' | grep -q '$B1'"
+[ "$FORGE" = 1 ] && gh pr list --state all --json number,url,baseRefName,headRefName,isDraft,title,body >"$RESULTS/prs.json"
 HEAD_BEFORE=$(git rev-parse HEAD)
 
 stage review "/factory:review" 12
