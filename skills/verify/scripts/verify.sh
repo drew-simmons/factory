@@ -17,24 +17,21 @@
 set -u
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-# The repository under test: CLAUDE_PROJECT_DIR when a hook or skill sets it,
-# otherwise the git work tree that contains the current directory.
-ROOT=${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}
+# The repository under test: the git work tree around the current directory
+# (an implementer agent runs inside its worktree), else CLAUDE_PROJECT_DIR.
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || ROOT=${CLAUDE_PROJECT_DIR:-}
 [ -n "$ROOT" ] || { echo "verify: not inside a git repository (set CLAUDE_PROJECT_DIR)" >&2; exit 2; }
 cd "$ROOT" || exit 2
 
 OUT=.verify
 mkdir -p "$OUT"
 
-# Configuration: factory.toml, then environment overrides.
+# Configuration: factory.toml through factory-config.py (python3 is required;
+# the script exits 2 and says why on a bad file), then environment overrides.
 CONFIG_PY="$HERE/factory-config.py"
-if command -v python3 >/dev/null 2>&1; then
-  eval "$(python3 -I "$CONFIG_PY" factory.toml)"
-else
-  FACTORY_SPEC_DIR=docs/specs; FACTORY_BASE=origin/main; VERIFY_THRESHOLD=5; VERIFY_COVERAGE=; VERIFY_LLM=0
-  VERIFY_EXCLUDE=; VERIFY_MAX_REQUESTS=50; VERIFY_MAX_ITERATIONS=5
-  VERIFY_CMD_TYPECHECK=; VERIFY_CMD_LINT=; VERIFY_CMD_FORMAT=; VERIFY_CMD_TEST=
-fi
+command -v python3 >/dev/null 2>&1 || { echo "verify: python3 is required to read factory.toml" >&2; exit 2; }
+CONF=$(python3 -I "$CONFIG_PY" factory.toml) || exit 2
+eval "$CONF"
 # A planned slice is measured against its Parent from plan.md, so every
 # stage sees the slice alone and not the whole stack. BASE=<ref> still wins.
 slice_parent() {
@@ -51,8 +48,10 @@ slice_parent() {
   done
   return 1
 }
-if [ -z "${BASE:-}" ]; then
-  PARENT=$(slice_parent) && git rev-parse -q --verify "$PARENT^{commit}" >/dev/null 2>&1 && FACTORY_BASE=$PARENT
+if [ -z "${BASE:-}" ] && PARENT=$(slice_parent); then
+  git rev-parse -q --verify "$PARENT^{commit}" >/dev/null 2>&1 \
+    || { echo "verify: Parent $PARENT of branch $(git branch --show-current) in $FACTORY_SPEC_DIR/*/plan.md does not exist; fetch it or fix plan.md" >&2; exit 2; }
+  FACTORY_BASE=$PARENT
 fi
 BASE=${BASE:-$FACTORY_BASE}
 THRESHOLD=${THRESHOLD:-$VERIFY_THRESHOLD}
@@ -68,14 +67,18 @@ if [ "${1:-}" = "--loop" ]; then
     "${CLAUDE_SESSION_ID:-}" "$VERIFY_MAX_ITERATIONS" >.factory/loop.local.md
 fi
 
-git rev-parse -q --verify "$BASE^{commit}" >/dev/null 2>&1 || BASE=main
+git rev-parse -q --verify "$BASE^{commit}" >/dev/null 2>&1 \
+  || { echo "verify: base ref $BASE does not exist (set [factory].base or BASE=<ref>)" >&2; exit 2; }
 MERGE_BASE=$(git merge-base "$BASE" HEAD 2>/dev/null) \
   || { echo "verify: no merge base between $BASE and HEAD (set [factory].base or BASE=<ref>)" >&2; exit 2; }
 
 # A change that already passed is not verified twice. The stamp covers the
-# tracked diff and every untracked file git does not ignore.
+# tracked diff, every untracked file git does not ignore, and the settings
+# that decide the verdict, so a changed threshold or base is a new run.
 stamp() {
   {
+    printf 'base=%s threshold=%s llm=%s max_requests=%s lawbook=%s\n' \
+      "$BASE" "$THRESHOLD" "$VERIFY_LLM" "$MAX_REQUESTS" "$LAWBOOK_CONFIG"
     git diff "$MERGE_BASE" --
     git ls-files --others --exclude-standard -z | xargs -0 cat 2>/dev/null
   } | sha256 | cut -c1-16
@@ -119,11 +122,15 @@ missing() { note "  $1 is not installed"; record 2; }
 run_stage() {
   # Run a stage command through sh so factory.toml commands may contain
   # arguments, pipes, or globs. The tail of its output goes to the summary.
+  # A command that is not installed is a broken loop (2), not a failed gate.
   note "  \$ $1"
   sh -c "$1" >"$OUT/stage.log" 2>&1
   rc=$?
   tail -n 40 "$OUT/stage.log" | tee -a "$OUT/summary.txt"
   rm -f "$OUT/stage.log"
+  case $rc in
+    126|127) note "  command not found or not executable: ${1%% *} (exit $rc); fix the setup, not the code"; return 2 ;;
+  esac
   return "$rc"
 }
 
@@ -222,8 +229,15 @@ CMD_FORMAT=${VERIFY_CMD_FORMAT:-$(default_format)}
 CMD_TEST=${VERIFY_CMD_TEST:-$(default_test)}
 COVERAGE=${VERIFY_COVERAGE:-$(default_coverage)}
 
+# Test file pathspecs, shared by the floor and the poly-crap scope. Kept as
+# one string and split with globbing off, like SRC_GLOB above.
+TEST_GLOBS='test/* tests/* *_test.go *.test.* *_test.py test_*.py *.spec.*'
 tests_changed() {
-  [ -n "$(changed_files 'test/*' 'tests/*' '*_test.go' '*.test.*' '*_test.py' 'test_*.py' '*.spec.*')" ]
+  set -f
+  # shellcheck disable=SC2086
+  changed=$(changed_files $TEST_GLOBS)
+  set +f
+  [ -n "$changed" ]
 }
 
 hunk_session_open() {
@@ -281,16 +295,48 @@ floor_hit() {
 }
 floor_hit '@ts-ignore|@ts-expect-error|eslint-disable|# *noqa|# *type: *ignore|#\[allow\(|//nolint|# pragma: no cover' "new suppression"
 floor_hit '\.skip\(|\.only\(|@pytest\.mark\.skip|#\[ignore\]|t\.Skip\(|(^|[^a-zA-Z0-9_.])(xit|xdescribe|fit|fdescribe)\(' "skipped or focused test"
-DELETED_TESTS=$(git diff --name-only --diff-filter=D "$MERGE_BASE" -- 'test/*' 'tests/*' '*_test.go' '*.test.*' '*_test.py' 'test_*.py' '*.spec.*')
+set -f
+# shellcheck disable=SC2086
+DELETED_TESTS=$(git diff --name-only --diff-filter=D "$MERGE_BASE" -- $TEST_GLOBS)
+# shellcheck disable=SC2086
+TEST_DIFF=$(git diff "$MERGE_BASE" -- $TEST_GLOBS)
+set +f
 if [ -n "$DELETED_TESTS" ]; then
   note "  FLOOR deleted test files:"
   printf '%s\n' "$DELETED_TESTS" | sed 's/^/    /' | tee -a "$OUT/summary.txt"
   record 1
 fi
-if git diff "$MERGE_BASE" -- factory.toml lawbook.yaml .poly-crap.toml | grep -Eq '^-.*(crap_threshold|threshold|level: *error)'; then
-  note "  FLOOR a threshold or rule level in factory.toml, lawbook.yaml, or .poly-crap.toml was edited; review by hand"
+# Fewer test definitions than before: a deleted test case inside a kept file.
+TEST_DEF='[[:space:]]*(def test_|async def test_|func Test|#\[test\]|(it|test|Deno\.test)\()'
+REMOVED_DEFS=$(printf '%s\n' "$TEST_DIFF" | grep -Ec "^-$TEST_DEF")
+ADDED_DEFS=$(printf '%s\n' "$TEST_DIFF" | grep -Ec "^\+$TEST_DEF")
+if [ "$REMOVED_DEFS" -gt "$ADDED_DEFS" ]; then
+  note "  FLOOR test definitions removed: $REMOVED_DEFS removed, $ADDED_DEFS added in changed test files"
   record 1
 fi
+# Config edits that lower the bar: a raised CRAP threshold admits more
+# complexity; a lawbook rule demoted from error level, or deleted, stops gating.
+for cfg in factory.toml .poly-crap.toml lawbook.yaml; do
+  CFG_DIFF=$(git diff "$MERGE_BASE" -- "$cfg")
+  [ -n "$CFG_DIFF" ] || continue
+  old=$(printf '%s\n' "$CFG_DIFF" | sed -n 's/^-[[:space:]]*\(crap_\)\{0,1\}threshold *= *\([0-9][0-9.]*\).*/\2/p' | head -n 1)
+  new=$(printf '%s\n' "$CFG_DIFF" | sed -n 's/^+[[:space:]]*\(crap_\)\{0,1\}threshold *= *\([0-9][0-9.]*\).*/\2/p' | head -n 1)
+  if [ -n "$new" ] && awk -v o="${old:-5}" -v n="$new" 'BEGIN { exit !(n + 0 > o + 0) }'; then
+    note "  FLOOR $cfg raises the CRAP threshold from ${old:-5 (default)} to $new"
+    record 1
+  fi
+  removed_fail=$(printf '%s\n' "$CFG_DIFF" | grep -Ec '^-[[:space:]]*level: *(error|fail)')
+  added_fail=$(printf '%s\n' "$CFG_DIFF" | grep -Ec '^\+[[:space:]]*level: *(error|fail)')
+  if [ "$removed_fail" -gt "$added_fail" ]; then
+    note "  FLOOR $cfg demotes an error-level rule"
+    record 1
+  fi
+  for id in $(printf '%s\n' "$CFG_DIFF" | sed -n 's/^-[[:space:]]*- id: *//p'); do
+    printf '%s\n' "$CFG_DIFF" | grep -Eq "^\+[[:space:]]*- id: *$id *$" && continue
+    note "  FLOOR $cfg deletes rule $id"
+    record 1
+  done
+done
 [ "$status" -eq 0 ] && note "  clean"
 
 stage "1  typecheck or syntax on changed files"
@@ -332,22 +378,31 @@ elif [ ! -f "$COVERAGE" ]; then
   note "  no coverage file at $COVERAGE; the test run did not produce coverage (set [verify].coverage)"
   record 2
 else
-  if tests_changed; then
-    note "  full scan: test files changed, so every function is scored"
-    set -- --path .
-  else
-    set -- --diff-base "$BASE"
-  fi
-  poly-crap "$@" --coverage "$COVERAGE" --threshold "$THRESHOLD" --fail-above \
-    --format json --output "$OUT/crap.json" 2>"$OUT/crap.err"
+  # The gate scores the functions this change touched, so a slice never
+  # inherits debt it did not write. [verify].exclude reaches poly-crap too.
+  set -- --coverage "$COVERAGE" --threshold "$THRESHOLD" --format json
+  set -f
+  for pattern in $VERIFY_EXCLUDE; do set -- "$@" --exclude "$pattern"; done
+  set +f
+  poly-crap "$@" --diff-base "$BASE" --fail-above --output "$OUT/crap.json" 2>"$OUT/crap.err"
   record $?
   grep -v '^$' "$OUT/crap.err" | head -n 5; rm -f "$OUT/crap.err"
-  jq -r --argjson t "$THRESHOLD" '
-    [.entries[] | select(.score > $t)]
-    | if length == 0 then "  no changed function scores above \($t)"
-      else .[] | "  \(.file | ltrimstr("./")):\(.start_line) \(.symbol)  CRAP \((.score * 10 | round) / 10)  CC \(.complexity | round)  coverage \(if .coverage == null then "none" else "\(.coverage | round)%" end)"
-      end
-  ' "$OUT/crap.json" 2>/dev/null | tee -a "$OUT/summary.txt"
+  crap_rows() {
+    jq -r --argjson t "$THRESHOLD" --arg none "$2" '
+      [.entries[] | select(.score > $t)]
+      | if length == 0 then $none
+        else .[] | "  \(.file | ltrimstr("./")):\(.start_line) \(.symbol)  CRAP \((.score * 10 | round) / 10)  CC \(.complexity | round)  coverage \(if .coverage == null then "none" else "\(.coverage | round)%" end)"
+        end
+    ' "$1" 2>/dev/null | tee -a "$OUT/summary.txt"
+  }
+  crap_rows "$OUT/crap.json" "  no changed function scores above $THRESHOLD"
+  # Changed tests can move the coverage of functions outside the diff. Those
+  # are scored too and listed as advisory; removed tests are a floor failure.
+  if tests_changed; then
+    poly-crap "$@" --path . --output "$OUT/crap-full.json" >/dev/null 2>&1
+    note "  test files changed; every function was scored, entries outside the diff are advisory:"
+    crap_rows "$OUT/crap-full.json" "  no function scores above $THRESHOLD"
+  fi
 fi
 
 stage "7  lawbook, model-judged standards"

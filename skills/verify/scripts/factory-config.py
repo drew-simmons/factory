@@ -5,6 +5,9 @@ Usage: python3 -I factory-config.py [path/to/factory.toml]
 
 Missing file or missing keys print the defaults. Values are shell-quoted
 with single quotes so `eval` is safe for any value a TOML string can hold.
+A file that cannot be read (Python older than 3.11, or invalid TOML) exits 2
+with a message on stderr and prints nothing, so a caller never evals a
+half-read configuration.
 """
 
 from __future__ import annotations
@@ -21,10 +24,6 @@ except ModuleNotFoundError:  # Python 3.10 and older
 DEFAULTS = {
     "FACTORY_SPEC_DIR": "docs/specs",
     "FACTORY_BASE": "origin/main",
-    "FACTORY_TRACKER": "",
-    "FACTORY_JIRA_SITE": "",
-    "FACTORY_JIRA_PROJECT": "",
-    "FACTORY_JIRA_TYPE": "Task",
     "VERIFY_THRESHOLD": "5",
     "VERIFY_COVERAGE": "",
     "VERIFY_LLM": "0",
@@ -40,10 +39,6 @@ DEFAULTS = {
 KEYS = {
     "FACTORY_SPEC_DIR": ("factory", "spec_dir"),
     "FACTORY_BASE": ("factory", "base"),
-    "FACTORY_TRACKER": ("tracker", "kind"),
-    "FACTORY_JIRA_SITE": ("tracker", "jira_site"),
-    "FACTORY_JIRA_PROJECT": ("tracker", "jira_project"),
-    "FACTORY_JIRA_TYPE": ("tracker", "jira_type"),
     "VERIFY_THRESHOLD": ("verify", "crap_threshold"),
     "VERIFY_COVERAGE": ("verify", "coverage"),
     "VERIFY_LLM": ("verify", "llm"),
@@ -74,16 +69,29 @@ def render(value) -> str:
     return str(value)
 
 
+class ConfigError(Exception):
+    """The file exists but cannot be read."""
+
+
 def load(path: Path) -> dict:
-    if tomllib is None or not path.is_file():
+    if not path.is_file():
         return {}
+    if tomllib is None:
+        raise ConfigError(f"{path} needs Python 3.11 or newer to be read (tomllib)")
     with path.open("rb") as handle:
-        return tomllib.load(handle)
+        try:
+            return tomllib.load(handle)
+        except tomllib.TOMLDecodeError as err:
+            raise ConfigError(f"{path} is not valid TOML: {err}") from err
 
 
 def main(argv: list[str]) -> int:
     path = Path(argv[1]) if len(argv) > 1 else Path("factory.toml")
-    data = load(path)
+    try:
+        data = load(path)
+    except ConfigError as err:
+        print(f"factory-config: {err}", file=sys.stderr)
+        return 2
     for name, default in DEFAULTS.items():
         value = lookup(data, KEYS[name])
         text = default if value is None or value == "" else render(value)

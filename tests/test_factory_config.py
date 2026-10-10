@@ -37,9 +37,7 @@ def test_values_override_defaults_and_are_quoted(tmp_path: Path, capsys):
     config.main(["factory-config.py", str(toml)])
     values = parse(capsys.readouterr().out)
     assert values["FACTORY_BASE"] == "main"
-    assert values["FACTORY_TRACKER"] == "jira"
-    assert values["FACTORY_JIRA_PROJECT"] == "ENG"
-    assert values["FACTORY_JIRA_TYPE"] == "Task"
+    assert "FACTORY_TRACKER" not in values  # the tracker is the plan skill's business
     assert values["VERIFY_THRESHOLD"] == "12"
     assert values["VERIFY_LLM"] == "1"
     assert values["VERIFY_EXCLUDE"] == "'upstream/* vendor/*'"
@@ -53,6 +51,31 @@ def test_empty_string_keeps_default(tmp_path: Path, capsys):
     values = parse(capsys.readouterr().out)
     assert values["VERIFY_COVERAGE"] == "''"
     assert values["VERIFY_CMD_LINT"] == "''"
+
+
+def test_invalid_toml_exits_two_and_prints_nothing_to_eval(tmp_path: Path, capsys):
+    toml = tmp_path / "factory.toml"
+    toml.write_text("[verify\ncrap_threshold = \n")
+    assert config.main(["factory-config.py", str(toml)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "not valid TOML" in captured.err
+
+
+def test_old_python_without_tomllib_exits_two(tmp_path: Path, capsys, monkeypatch):
+    toml = tmp_path / "factory.toml"
+    toml.write_text("[verify]\ncrap_threshold = 3\n")
+    monkeypatch.setattr(config, "tomllib", None)
+    assert config.main(["factory-config.py", str(toml)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "3.11" in captured.err
+
+
+def test_old_python_without_a_file_still_prints_defaults(tmp_path: Path, capsys, monkeypatch):
+    monkeypatch.setattr(config, "tomllib", None)
+    assert config.main(["factory-config.py", str(tmp_path / "factory.toml")]) == 0
+    assert parse(capsys.readouterr().out)["VERIFY_THRESHOLD"] == "5"
 
 
 def test_output_is_valid_shell(tmp_path: Path):
