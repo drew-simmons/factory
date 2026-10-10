@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 (2026-10-10)
+
 - Every skill and both agents carry a shell discipline rule: one command
   per Bash call, no chains, pipes, redirects, or substitution, files
   through Write and Edit; a denied command is retried, not treated as a
