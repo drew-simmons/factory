@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- `plan-check.py` in the plan skill reads `plan.md` and fails on a slice
+  blocked by two independent chains, a Parent that is not the base or a
+  slice branch, a parent slice missing from `Blocked by`, or waves that
+  disagree with the blockers. The plan skill runs it before presenting the
+  breakdown; verify runs it as stage 0b when a plan changed. `--stack`
+  lists the slices for the skills that walk the stack.
+- `/factory:review` writes `<spec_dir>/<slug>/review-NN.md` with one
+  checkbox per finding, and `/factory:implement <NN> --from-review` fixes
+  the unchecked P0 to P2 items and commits with the file.
+- `release-worktree.sh` in the implement skill copies an implementer
+  agent's verify evidence to `.verify/slices/NN/` before removing its
+  worktree; `/factory:simplify` commits its own change; `/factory:pr
+  --stack` opens one PR per slice branch, bottom up, with a stack table.
+- Simulations: a timeout per session, an isolated Claude config directory,
+  three free checks per stage (no error, no denial, finished on its own),
+  issue and PR baselines, one throwaway repository per run, review checks
+  on the handoff file, a non-zero exit on any failed check, and
+  `report.sh` to print a run's tables as markdown. The verify tests cover
+  the node stack, a missing coverage file, and the lawbook stage.
 - The Stop hook gates every stop until `max_iterations`, not one forced
   continuation; it blocks without `jq`; it reads the repository from the
   payload cwd and also runs on SubagentStop, so implementer agents in
