@@ -48,18 +48,21 @@ owns the fixes.
 Cheapest first, all scoped to the merge base against the working tree, untracked
 files included. On a planned slice branch the base is the slice's `Parent` from
 `plan.md`, so the stack above it is not re-judged; otherwise it is `base` from
-`factory.toml`. Stack commands come from `factory.toml` `[verify.commands]` or
-the defaults in `${CLAUDE_PLUGIN_ROOT}/skills/setup/references/factory-toml.md`.
+`factory.toml`. A base or Parent that does not resolve is exit 2, never a
+silent fallback. Stack commands come from `factory.toml` `[verify.commands]` or
+the defaults in `${CLAUDE_PLUGIN_ROOT}/skills/setup/references/factory-toml.md`;
+a stage with no command for the stack is skipped, a command that is not
+installed is exit 2.
 
 | # | Stage | Fail | Missing tool |
 |---|---|---|---|
-| 0 | floor: new suppressions, skipped or deleted tests, stripped assertions, lowered thresholds | 1 | - |
+| 0 | floor: new suppressions, skipped or deleted tests, removed test definitions, a raised CRAP threshold, a demoted or deleted lawbook rule | 1 | - |
 | 1 | typecheck or syntax on changed files | 1 | 2 |
-| 2 | lint on changed files | 1 | skip |
-| 3 | format check on changed files | 1 | skip |
+| 2 | lint on changed files | 1 | 2 |
+| 3 | format check on changed files | 1 | 2 |
 | 4 | `lawbook check --no-llm --changed --since <base>` when `lawbook.yaml` exists | 1 | 2 |
 | 5 | tests with coverage | 1 | 2 |
-| 6 | `poly-crap --diff-base <base> --fail-above` (full scan when tests changed) | 1 | 2 |
+| 6 | `poly-crap --diff-base <base> --fail-above` on changed functions; the full scan after a test change is advisory | 1 | 2 |
 | 7 | lawbook model standards, only on a green tree with `llm = true`; `warn`-level findings are advisory | 1 | skip |
 | 8 | findings to `.verify/notes.json` and a live Hunk session | - | skip |
 
@@ -69,9 +72,11 @@ the defaults in `${CLAUDE_PLUGIN_ROOT}/skills/setup/references/factory-toml.md`.
 --loop`. The script writes `.factory/loop.local.md` (blank `session_id`,
 so the hook acts for any session, `iteration: 0`, and `max_iterations`)
 before the first stage, then runs the loop. While that file exists the
-plugin's Stop hook reruns the script when the turn tries to end, blocks on
-exit 1 with the findings, and deletes the file on exit 0 or at the cap.
-`/factory:implement` arms it the same way. Do not write the file by hand.
+plugin's Stop and SubagentStop hooks rerun the script every time the turn
+tries to end, block on red with the findings, and delete the file on exit 0
+or at the cap. The bound is `max_iterations` within one loop, not one
+forced continuation. `/factory:implement` arms it the same way. Do not
+write the file by hand.
 
 ## Rules
 
