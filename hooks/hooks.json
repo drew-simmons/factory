@@ -1,5 +1,5 @@
 {
-  "description": "factory: report tool availability at session start; block a red turn from ending while a verify loop is armed",
+  "description": "factory: report tool availability at session start; while a verify loop is armed, block a red turn from ending (Stop and SubagentStop, so implementer agents in worktrees are gated too)",
   "hooks": {
     "SessionStart": [
       {
@@ -19,7 +19,18 @@
           {
             "type": "command",
             "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/verify-stop.sh\"",
-            "timeout": 600
+            "timeout": 1800
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/verify-stop.sh\"",
+            "timeout": 1800
           }
         ]
       }
