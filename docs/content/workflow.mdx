@@ -29,10 +29,10 @@ could not pick up from disk.
 | `spec` | The conversation, linked issues, nearby code and tests | `<spec_dir>/<slug>/spec.md` |
 | `plan` | `spec.md` with `Status: agreed` | `<spec_dir>/<slug>/plan.md`, tracker items or `issues/NN-<task>.md` |
 | `implement` | `plan.md`, `spec.md` | Commits on `<slug>/NN-<task>`, `.factory/loop.local.md` |
-| `simplify` | The diff against `base` | Edits |
+| `simplify` | The diff against `base` | Edits and a `refactor` commit |
 | `verify` | The diff against `base`, `factory.toml` `[verify]` | `.verify/summary.txt`, `crap.json`, `lawbook.json`, `green` |
 | `pr` | `plan.md`, `.verify/summary.txt`, `.verify/green` | A PR on the forge |
-| `review` | The diff against the slice's parent, `spec.md` | Findings in the reply |
+| `review` | The diff against the slice's parent, `spec.md` | `<spec_dir>/<slug>/review-NN.md`, findings in the reply |
 
 `spec_dir` defaults to `docs/specs`. `base` defaults to `origin/main`.
 
