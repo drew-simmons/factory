@@ -44,7 +44,7 @@ stage implement-01 "/factory:implement 01" 18
 snap implement-01
 check implement-01 "slice 01 branch is checked out" on_branch "$B1"
 check implement-01 "a commit landed on slice 01" test "$(git rev-parse HEAD)" != "$BASE_SHA"
-check implement-01 "commit message cites the slice" sh -c "git log -1 --format=%s | grep -Eq '\(01, R[0-9]'"
+check implement-01 "commit message cites the slice" sh -c "git log -1 --format=%s | grep -Eq '\((slice )?01, R[0-9]'"
 check implement-01 "tree is clean" tree_clean
 check implement-01 "a test file changed" sh -c "git diff --name-only '$BASE_SHA' -- test | grep -q ."
 check implement-01 "verify stamped the tree green" green_matches
@@ -65,7 +65,7 @@ snap implement-02
 check implement-02 "slice 02 branch is checked out" on_branch "$B2"
 check implement-02 "slice 02 starts at the tip of slice 01" test "$(git merge-base "$B1" "$B2")" = "$S1"
 check implement-02 "a commit landed on slice 02" test "$(git rev-parse HEAD)" != "$S1"
-check implement-02 "commit message cites the slice" sh -c "git log -1 --format=%s | grep -Eq '\(02, R[0-9]'"
+check implement-02 "commit message cites the slice" sh -c "git log -1 --format=%s | grep -Eq '\((slice )?02, R[0-9]'"
 check implement-02 "tree is clean" tree_clean
 check implement-02 "the flag works end to end" sh -c "cd '$WORK' && pnpm --silent run status status --json | node -e 'let s=\"\";process.stdin.on(\"data\",d=>s+=d).on(\"end\",()=>{const o=JSON.parse(s);if(!(\"version\" in o))process.exit(1)})'"
 check implement-02 "text output is unchanged" sh -c "cd '$WORK' && pnpm --silent run status status | grep -Eq '^version +0.1.0$'"
