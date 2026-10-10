@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `verify` stage 7 passes `--changed-lines` when the installed lawbook has
+  it (0.4 and later), so a standard finding on a line the change did not
+  touch no longer fails the run or sends the implementer after it; the
+  summary counts the findings dropped as outside the change.
+
 ## 0.6.0 (2026-10-10)
 
 - Every skill and both agents carry a shell discipline rule: one command

@@ -257,7 +257,9 @@ lawbook_summary() {
     | .findings[]
     | "  \($status | ascii_upcase) [\($id)] \(.path // "-")\(if .line then ":\(.line)" else "" end): \(.message)"
   ' "$OUT/lawbook.json" 2>/dev/null | tee -a "$OUT/summary.txt"
-  jq -r '.summary | "  \(.passed) passed, \(.failed) failed, \(.warned) warned, \(.errored) errored, \(.skipped) skipped"' \
+  jq -r '.summary
+    | "  \(.passed) passed, \(.failed) failed, \(.warned) warned, \(.errored) errored, \(.skipped) skipped"
+      + (if (.outside // 0) > 0 then ", \(.outside) finding(s) outside the change dropped" else "" end)' \
     "$OUT/lawbook.json" 2>/dev/null | tee -a "$OUT/summary.txt"
 }
 
@@ -421,9 +423,16 @@ else
 fi
 
 stage "7  lawbook, model-judged standards"
+# lawbook 0.4 and later judge a standard on the lines the change touched
+# (`--changed-lines`), so a slice never inherits a finding on a line it did
+# not write. An older lawbook rejects the flag, so it is passed only when
+# the installed one lists it.
+lawbook_scope() { lawbook check --help 2>/dev/null | grep -q -- '--changed-lines' && echo --changed-lines; }
+LAWBOOK_SCOPE=$(command -v lawbook >/dev/null 2>&1 && lawbook_scope)
 # The dry run sees the whole config, extends included, so it is the only
 # reliable way to know whether a standard rule selects a changed file.
-lawbook_plan() { lawbook check . --config "$LAWBOOK_CONFIG" --changed --since "$BASE" --dry-run 2>/dev/null; }
+# shellcheck disable=SC2086  # an empty scope must vanish, not pass ""
+lawbook_plan() { lawbook check . --config "$LAWBOOK_CONFIG" --changed --since "$BASE" $LAWBOOK_SCOPE --dry-run 2>/dev/null; }
 if [ "$status" -ne 0 ]; then skip "an earlier stage failed; no model requests on a red tree"
 elif [ ! -f "$LAWBOOK_CONFIG" ]; then skip "no $LAWBOOK_CONFIG"
 elif ! command -v lawbook >/dev/null 2>&1; then skip "lawbook is not installed"
@@ -431,7 +440,8 @@ elif ! lawbook_plan | grep -Eq '\(standard, [1-9]'; then skip "no standard rule 
 elif [ "$VERIFY_LLM" != "1" ]; then skip "set [verify].llm = true (or VERIFY_LLM_OVERRIDE=1) to judge prose standards"
 else
   note "  plan: $(lawbook_plan | tail -n 1), cap $MAX_REQUESTS"
-  lawbook check . --config "$LAWBOOK_CONFIG" --changed --since "$BASE" --max-requests "$MAX_REQUESTS" --format json >"$OUT/lawbook.json"
+  # shellcheck disable=SC2086
+  lawbook check . --config "$LAWBOOK_CONFIG" --changed --since "$BASE" $LAWBOOK_SCOPE --max-requests "$MAX_REQUESTS" --format json >"$OUT/lawbook.json"
   rc=$?
   record "$rc"
   lawbook_summary

@@ -47,6 +47,9 @@ table, the floor rules, and the exit codes are on
   tree and remembers the last green change.
 - Never edit `lawbook.yaml`, `factory.toml` thresholds, or test files to
   make a stage pass. Report the finding instead.
+- A standard finding on a line the change did not touch is not the
+  change's to fix. lawbook 0.4 and later drops it; with an older lawbook,
+  report it and leave the line alone.
 - Do not launch `hunk diff`; the human owns the TUI.
 
 ## Done when
