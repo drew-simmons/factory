@@ -28,6 +28,7 @@ STAGES=$RESULTS/stages.tsv
 if [ "${SIM_APPEND:-0}" != "1" ]; then
   : >"$CHECKS"
   : >"$STAGES"
+  rm -rf "$RESULTS/parent-docs"
 fi
 BUDGET=${SIM_BUDGET:-10}
 MODEL=${SIM_MODEL:-}
@@ -162,8 +163,9 @@ open_questions_empty() {
 }
 # spec_path and plan_path: the files in the checkout, else the copy a run saved
 # under $RESULTS/parent-docs before cleaning the untracked spec directory.
-spec_path() { ls "$WORK"/docs/specs/*/spec.md "$RESULTS"/parent-docs/specs/*/spec.md 2>/dev/null | head -n 1; }
-plan_path() { ls "$WORK"/docs/specs/*/plan.md "$RESULTS"/parent-docs/specs/*/plan.md 2>/dev/null | head -n 1; }
+first_of() { for f in "$@"; do [ -f "$f" ] && { echo "$f"; return 0; }; done; return 1; }
+spec_path() { first_of "$WORK"/docs/specs/*/spec.md "$RESULTS"/parent-docs/specs/*/spec.md; }
+plan_path() { first_of "$WORK"/docs/specs/*/plan.md "$RESULTS"/parent-docs/specs/*/plan.md; }
 # committed_slices: ids whose branch has a commit past its parent.
 committed_slices() {
   for id in $(slice_ids); do

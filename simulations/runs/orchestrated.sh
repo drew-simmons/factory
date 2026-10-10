@@ -30,6 +30,15 @@ check spec-agree "plan-check accepts the draft plan" plan_checks_out "$(plan_pat
 
 stage plan-approve "The plan is approved as drafted: granularity, blocking edges, and the merge or split are all fine. Publish it, then run /factory:run to continue through implement, simplify, review, and the review fixes; I invoked it on purpose. Stop at the PR gate." 90
 snap plan-approve
+# run.md is the resume point: a run that ended its turn mid-stage is resumed
+# the way a user would, up to twice, until it reaches the pr gate.
+n=0
+while [ "$(run_field "Waiting on")" != pr ] && [ "$(run_field Stage)" != "done" ] && [ "$n" -lt 2 ]; do
+  n=$((n + 1))
+  stage "run-resume-$n" "/factory:run. I invoked this on purpose; resume from run.md and continue to the PR gate." 90
+  snap "run-resume-$n"
+done
+check plan-approve "the run needed at most one resume to reach the pr gate" test "$n" -le 1
 check plan-approve "the plan was published to the tracker" tracker_published "$(plan_path)" "$(($(slice_count) + 1))"
 check plan-approve "run stopped at the pr gate" test "$(run_field "Waiting on")" = pr
 check plan-approve "every slice has a branch" sh -c "for id in \$(grep -E '^### [0-9][0-9] ' '$(plan_path)' | awk '{print \$2}'); do git rev-parse -q --verify \"refs/heads/\$(sed -n \"/^### \$id /,/^### /{ s/^- Branch: *//p; }\" '$(plan_path)' | head -n 1)\" >/dev/null || exit 1; done"
