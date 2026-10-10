@@ -57,6 +57,7 @@ installed is exit 2.
 | # | Stage | Fail | Missing tool |
 |---|---|---|---|
 | 0 | floor: new suppressions, skipped or deleted tests, removed test definitions, a raised CRAP threshold, a demoted or deleted lawbook rule | 1 | - |
+| 0b | plan: a changed `plan.md` still describes a linear stack whose waves agree with its blockers | 1 | - |
 | 1 | typecheck or syntax on changed files | 1 | 2 |
 | 2 | lint on changed files | 1 | 2 |
 | 3 | format check on changed files | 1 | 2 |

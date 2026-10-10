@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires git. Publishing needs gh, glab, or acli depending on factory.toml.
 metadata:
   upstream: "mattpocock-skills/to-tickets, addyosmani-agent-skills/planning, cursor-plugins/pstack-playbooks"
-allowed-tools: Bash(git:*) Bash(gh:*) Bash(glab:*) Bash(acli:*) Read Write Glob Grep
+allowed-tools: Bash(git:*) Bash(gh:*) Bash(glab:*) Bash(acli:*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/plan-check.py *) Read Write Glob Grep
 ---
 
 # plan
@@ -50,17 +50,24 @@ parallel worktrees, each landing as one PR in a stack.
   that needs two independent chains cannot be stacked on both; serialize
   the chains (make the head of one block the root of the other) rather
   than let an implementer copy commits across branches.
+  `${CLAUDE_SKILL_DIR}/scripts/plan-check.py <plan.md>` checks these
+  rules and the waves; it must exit 0 before the breakdown is shown.
+- After publishing, slice status lives in the tracker (or the issue
+  files), not in `plan.md`. `plan.md` is not edited to track progress, so
+  the copy in every slice commit stays identical.
 
 ## Steps
 
 1. Read `spec.md` and the code around the seams it names. Look for
    prefactoring that makes the slices smaller; schedule it as slice `01`.
 2. Draft the slices with ids, requirement ids, blockers, branch, parent,
-   delivers, and acceptance checks. Then compute waves.
+   delivers, and acceptance checks. Then compute waves. Write the draft
+   to `plan.md` and run `python3 ${CLAUDE_SKILL_DIR}/scripts/plan-check.py
+   <plan.md>`; fix every finding it names until it exits 0.
 3. Present the breakdown as a numbered list and ask the three upstream
    questions: granularity, blocking edges, merge or split. Iterate until
    the user approves. Do not publish before approval.
-4. Write `plan.md` from the template.
+4. Update `plan.md` with what the user changed and rerun `plan-check.py`.
 5. Publish per `tracker.kind` using `references/trackers.md`. For `local`,
    write one issue file per slice. For remote trackers, create the tracking
    item first, then each slice, blockers before dependents, and fill the
@@ -72,4 +79,4 @@ parallel worktrees, each landing as one PR in a stack.
 ## Done when
 
 `plan.md` exists with every slice traced to requirement ids, a valid
-`waves` block, and a `Tracker:` line per slice.
+`waves` block, a `Tracker:` line per slice, and `plan-check.py` exits 0.
