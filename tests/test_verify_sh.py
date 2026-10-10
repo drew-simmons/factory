@@ -469,3 +469,97 @@ def test_a_changed_plan_with_a_diamond_fails_the_plan_stage(repo: Path):
     fixed = run_verify(repo)
     assert fixed.returncode == 0, fixed.stdout + fixed.stderr
     assert "stack is linear" in fixed.stdout
+
+
+needs_pnpm = pytest.mark.skipif(
+    not all(shutil.which(t) for t in ("pnpm", "node", "poly-crap", "jq", "git")),
+    reason="the node stack test needs pnpm, node, poly-crap, jq, and git",
+)
+needs_lawbook = pytest.mark.skipif(
+    not shutil.which("lawbook")
+    or not all(shutil.which(t) for t in ("uv", "poly-crap", "jq", "git")),
+    reason="the lawbook stage test needs lawbook and the python stack tools",
+)
+STATUS_FIXTURE = ROOT / "simulations" / "fixtures" / "status"
+
+
+@pytest.fixture(scope="module")
+def node_repo(tmp_path_factory) -> Path:
+    """The status fixture from simulations/, installed once per module."""
+    repo = tmp_path_factory.mktemp("node") / "status"
+    shutil.copytree(
+        STATUS_FIXTURE,
+        repo,
+        ignore=shutil.ignore_patterns("node_modules", "coverage", "scaffold.sh"),
+    )
+    subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile", "--silent"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    git("init", "-q", "-b", "main", cwd=repo)
+    for key, value in (("commit.gpgsign", "false"), ("user.name", "t"), ("user.email", "t@t")):
+        git("config", key, value, cwd=repo)
+    (repo / "factory.toml").write_text("[factory]\nbase = 'main'\n")
+    (repo / "lawbook.yaml").unlink()  # the fixture's lawbook config is for the simulations
+    commit_all(repo, "base")
+    return repo
+
+
+@needs_pnpm
+def test_node_stack_green_change_exits_zero(node_repo: Path):
+    git("switch", "-q", "-C", "feature", "main", cwd=node_repo)
+    (node_repo / "src" / "format.ts").write_text(
+        (node_repo / "src" / "format.ts").read_text()
+        + "\n\nexport function shout(text: string): string {\n  return text.toUpperCase();\n}\n"
+    )
+    (node_repo / "test" / "format.test.ts").write_text(
+        (node_repo / "test" / "format.test.ts").read_text()
+        + '\n\nimport { shout } from "../src/format.ts";\n\nit("shouts", () => {\n  expect(shout("a")).toBe("A");\n});\n'
+    )
+    result = run_verify(node_repo)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "stack node" in result.stdout
+    assert "tsc --noEmit" in result.stdout
+    assert "pnpm test" in result.stdout
+    git("checkout", "-q", "--", ".", cwd=node_repo)
+
+
+@needs_pnpm
+def test_node_stack_suppression_trips_the_floor(node_repo: Path):
+    git("switch", "-q", "-C", "feature-2", "main", cwd=node_repo)
+    marker = "// eslint-" + "disable-next-line"
+    (node_repo / "src" / "format.ts").write_text(
+        (node_repo / "src" / "format.ts").read_text() + f"\n{marker}\nexport const x: any = 1;\n"
+    )
+    result = run_verify(node_repo)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "FLOOR new suppression" in result.stdout
+    git("checkout", "-q", "--", ".", cwd=node_repo)
+
+
+@needs_tools
+def test_missing_coverage_file_exits_two(repo: Path):
+    (repo / "factory.toml").write_text(
+        "[factory]\nbase = 'main'\n[verify.commands]\ntest = 'uv run pytest -q'\n"
+    )
+    green_change(repo)
+    result = run_verify(repo)
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "no coverage file" in result.stdout
+    assert "[verify].coverage" in result.stdout
+
+
+@needs_lawbook
+def test_lawbook_deterministic_stage_fails_on_a_forbidden_pattern(repo: Path):
+    (repo / "lawbook.yaml").write_text(
+        "version: 1\nrules:\n  - id: no-todos\n    files: ['src/**/*.py']\n"
+        "    forbid: 'TODO'\n    message: cite an issue instead of a TODO\n"
+    )
+    commit_all(repo, "add lawbook")
+    (repo / "src" / "fixture.py").write_text(MODULE + "\n# TODO later\n")
+    result = run_verify(repo)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "FAIL [no-todos]" in result.stdout
+    assert (repo / ".verify" / "lawbook.json").is_file()
