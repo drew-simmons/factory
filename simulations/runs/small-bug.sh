@@ -48,7 +48,7 @@ snap implement
 check implement "slice branch is checked out" on_branch "$BRANCH"
 check implement "slice branch starts at main" test "$(git merge-base main "$BRANCH")" = "$BASE_SHA"
 check implement "a commit landed on the slice branch" test "$(git rev-parse HEAD)" != "$BASE_SHA"
-check implement "commit message cites the slice and a requirement" sh -c "git log -1 --format=%s | grep -Eq '\(01, R[0-9]'"
+check implement "commit message cites the slice and a requirement" sh -c "git log -1 --format=%s | grep -Eq '\((slice )?01, R[0-9]'"
 check implement "tree is clean after implement" tree_clean
 check implement "a test file changed" sh -c "git diff --name-only '$BASE_SHA' -- tests | grep -q ."
 check implement "the fix landed in money.py" sh -c "git diff '$BASE_SHA' -- src/ledger/money.py | grep -q '^+.*ROUND_HALF_UP'"

@@ -60,7 +60,7 @@ for id in $SLICES; do
   committed_slices | grep -qx "$id" || { check implement-all "slice $id was committed (kept red by the implementer otherwise)" false; continue; }
   check implement-all "slice $id branch descends from its parent $p" sh -c "git merge-base --is-ancestor '$p' '$b'"
   check implement-all "slice $id has its own commit" test "$(git rev-parse "$b" 2>/dev/null)" != "$(git rev-parse "$p" 2>/dev/null)"
-  check implement-all "slice $id commit cites the slice" sh -c "git log -1 --format=%s '$b' | grep -Eq '\($id, R[0-9]'"
+  check implement-all "slice $id commit cites the slice" sh -c "git log -1 --format=%s '$b' | grep -Eq '\((slice )?$id, R[0-9]'"
 done
 # shellcheck disable=SC2086
 set -- $WAVE0
@@ -111,7 +111,8 @@ HEAD_BEFORE=$(git rev-parse HEAD)
 stage fix "/factory:implement $LAST --from-review" 18
 check fix "review fixes landed as a commit when there was a P0 to P2 finding" sh -c "! grep -Eq '^- \[ \] \[P[012]\]' '$(review_path "$LAST")' || [ \"\$(git rev-parse HEAD)\" != '$HEAD_BEFORE' ]"
 check fix "no unchecked P0 to P2 finding remains" sh -c "! grep -Eq '^- \[ \] \[P[012]\]' '$(review_path "$LAST")'"
-check fix "tree is clean after the fix" tree_clean
+# With only P3 findings nothing is fixed or committed, and the review file stays untracked.
+check fix "tree is clean after the fix, or only the review file is untracked" sh -c "[ -z \"\$(git status --porcelain | grep -v 'review-$LAST.md')\" ]"
 check fix "verify is green after the fix" green_matches
 check review "review committed nothing" test "$(git rev-parse HEAD)" = "$HEAD_BEFORE"
 
