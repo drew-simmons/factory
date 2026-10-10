@@ -66,7 +66,7 @@ installed is exit 2.
 | 4 | `lawbook check --no-llm --changed --since <base>` when `lawbook.yaml` exists | 1 | 2 |
 | 5 | tests with coverage | 1 | 2 |
 | 6 | `poly-crap --diff-base <base> --fail-above` on changed functions; the full scan after a test change is advisory | 1 | 2 |
-| 7 | lawbook model standards, only on a green tree with `llm = true`; `warn`-level findings are advisory | 1 | skip |
+| 7 | lawbook model standards, only on a green tree with `llm = true`, on the changed lines when the installed lawbook has `--changed-lines`; `warn`-level findings are advisory | 1 | skip |
 | 8 | findings to `.verify/notes.json` and a live Hunk session | - | skip |
 
 ## --loop
@@ -97,4 +97,7 @@ write the file by hand.
   tree and remembers the last green change.
 - Never edit `lawbook.yaml`, `factory.toml` thresholds, or test files to
   make a stage pass. Report the finding instead.
+- A standard finding on a line the change did not touch is not the
+  change's to fix. lawbook 0.4 and later drops it; with an older lawbook,
+  report it and leave the line alone.
 - Do not launch `hunk diff`; the human owns the TUI.

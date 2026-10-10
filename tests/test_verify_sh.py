@@ -563,3 +563,47 @@ def test_lawbook_deterministic_stage_fails_on_a_forbidden_pattern(repo: Path):
     assert result.returncode == 1, result.stdout + result.stderr
     assert "FAIL [no-todos]" in result.stdout
     assert (repo / ".verify" / "lawbook.json").is_file()
+
+
+# A stand-in lawbook: records every call, lists --changed-lines in its help
+# when STUB_FLAG is set, plans one standard file, and answers each check with
+# a passing report that dropped one finding as outside the change.
+LAWBOOK_STUB = """#!/bin/sh
+printf '%s\\n' "$*" >>"$STUB_LOG"
+case "$*" in
+  *--help*) [ -n "$STUB_FLAG" ] && echo "  --changed-lines  judge the changed lines" ;;
+  *--dry-run*) printf 'PLAN behavior (standard, 1 file)\\n  src/fixture.py\\n\\n1 file, 1 model request\\n' ;;
+  *) echo '{"results":[{"id":"behavior","kind":"standard","level":"error","status":"pass",'
+     echo '"findings":[],"outside":1}],"summary":{"passed":1,"failed":0,"warned":0,'
+     echo '"errored":0,"skipped":0,"outside":1}}' ;;
+esac
+"""
+
+
+@needs_tools
+@pytest.mark.parametrize("has_flag", [True, False])
+def test_model_stage_scopes_to_changed_lines_when_the_installed_lawbook_can(
+    repo: Path, tmp_path: Path, has_flag: bool
+):
+    stub_dir = tmp_path / "bin"
+    stub_dir.mkdir()
+    (stub_dir / "lawbook").write_text(LAWBOOK_STUB)
+    (stub_dir / "lawbook").chmod(0o755)
+    (repo / "lawbook.yaml").write_text("version: 1\nrules: []\n")
+    commit_all(repo, "add lawbook")
+    green_change(repo)
+    log = tmp_path / "calls.log"
+    result = run_verify(
+        repo,
+        PATH=f"{stub_dir}{os.pathsep}{os.environ['PATH']}",
+        VERIFY_LLM_OVERRIDE="1",
+        STUB_LOG=str(log),
+        STUB_FLAG="1" if has_flag else "",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    judged = [call for call in log.read_text().splitlines() if "--max-requests" in call]
+    assert len(judged) == 1, log.read_text()
+    assert ("--changed-lines" in judged[0]) is has_flag
+    planned = [call for call in log.read_text().splitlines() if "--dry-run" in call]
+    assert all(("--changed-lines" in call) is has_flag for call in planned)
+    assert "1 finding(s) outside the change dropped" in result.stdout
