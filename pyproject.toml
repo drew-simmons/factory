@@ -1,6 +1,6 @@
 [project]
 name = "factory-tooling"
-version = "0.6.0"
+version = "0.7.0"
 description = "Maintenance tooling for the factory Claude Code plugin."
 requires-python = ">=3.11"
 dependencies = []

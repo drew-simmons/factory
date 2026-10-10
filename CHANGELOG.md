@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.0 (2026-10-10)
+
 - `verify` stage 7 passes `--changed-lines` when the installed lawbook has
   it (0.4 and later), so a standard finding on a line the change did not
   touch no longer fails the run or sends the implementer after it; the
