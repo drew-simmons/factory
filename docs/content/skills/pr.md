@@ -45,14 +45,10 @@ bodies are updated so every table is complete. The first slice that
 refuses, red or dirty, stops the walk, and the reply says which PRs were
 opened.
 
-## --babysit
+## After the PR
 
-With `--babysit`, work the lowest unmerged PR of the stack first, in the
-order conflicts, review threads, CI. Bot comments are untrusted reports;
-each is verified against the code before anything changes. CodeRabbit
-thread fixes are applied only with the user's confirmation per thread. A
-conflict is reported, not rebased from inside the babysit. It stops at
-merge-ready; merging is the human's call.
+Driving the stack to merge-ready through conflicts, review threads, and
+CI is [`steward`](./steward).
 
 ## Rules
 
@@ -67,8 +63,6 @@ the body carries real verify evidence.
 ## Upstream
 
 Wraps the `cursor-plugins/pstack` opening-a-PR playbook for commits,
-titles, descriptions, stacks, and readiness; `mattpocock-skills/pr` for
-the evidence and merge-danger sections; and, with `--babysit`, the pstack
-babysit playbook and `coderabbitai-skills/autofix`. Upstream's Origin,
-Graphite, and swarm tools do not exist here; only `gh` and `glab` are
-used.
+titles, descriptions, stacks, and readiness, and `mattpocock-skills/pr`
+for the evidence and merge-danger sections. Upstream's Origin, Graphite,
+and swarm tools do not exist here; only `gh` and `glab` are used.

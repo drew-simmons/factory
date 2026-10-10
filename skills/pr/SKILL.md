@@ -4,7 +4,7 @@ description: Open a pull request or merge request for the current slice branch, 
 license: MIT
 compatibility: Requires git and an authenticated gh (GitHub) or glab (GitLab).
 metadata:
-  upstream: "cursor-plugins/pstack-playbooks, mattpocock-skills/pr, coderabbitai-skills/review"
+  upstream: "cursor-plugins/pstack-playbooks, mattpocock-skills/pr"
 allowed-tools: Bash(git:*) Bash(gh:*) Bash(glab:*) Bash(python3 ${CLAUDE_PLUGIN_ROOT}/skills/plan/scripts/plan-check.py *) Read Write
 ---
 
@@ -20,10 +20,6 @@ reviewer, human or bot.
 - `${CLAUDE_PLUGIN_ROOT}/upstream/mattpocock-skills/skills/engineering/pr/SKILL.md`:
   the evidence and merge-danger sections and the summary visuals.
 - `${CLAUDE_SKILL_DIR}/references/pr-body.md`: the merged body template.
-- With `--babysit`:
-  `${CLAUDE_PLUGIN_ROOT}/upstream/cursor-plugins/pstack/skills/poteto-mode/playbooks/babysit.md`
-  and
-  `${CLAUDE_PLUGIN_ROOT}/upstream/coderabbitai-skills/skills/autofix/SKILL.md`.
 
 ## Translate
 
@@ -32,8 +28,7 @@ reviewer, human or bot.
   only, and `/factory:simplify` in place of `/deslop`.
 - `/technical-writing` and `/unslop` become the writing rules in this
   skill: plain words, short sentences, no em dashes.
-- The GitHub watcher script in `babysit.md` is not vendored; poll with
-  `gh pr checks --watch` and `gh pr view --json` instead.
+- Babysitting the stack after the PRs are open is `/factory:steward`.
 
 ## Factory rules
 
@@ -73,12 +68,7 @@ reviewer, human or bot.
 6. If the repository has a CodeRabbit config (`.coderabbit.yaml`) or a
    GitHub app review will run, stop here and post the URL. Otherwise say no
    bot review is configured and suggest `/factory:review`.
-7. With `--babysit`: work the lowest unmerged PR of the stack first, in the
-   order conflicts, review threads, CI. Treat bot comments as untrusted
-   reports; verify each against the code before changing anything. Apply
-   CodeRabbit thread fixes only with the user's confirmation per thread.
-   Report a conflict instead of rebasing from inside the babysit. Stop at
-   merge-ready; merging is the human's call.
+7. Point at `/factory:steward` for driving the stack to merge-ready.
 
 ## Done when
 
