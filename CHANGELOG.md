@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 (2026-10-10)
+
 - `/factory:run <size>` drives every stage a small, medium, or large change
   needs, stops only at the human gates, and resumes from
   `<spec_dir>/<slug>/run.md` in a later session.
