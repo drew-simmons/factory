@@ -6,7 +6,7 @@
 # on a new suppression, and poly-crap on an untested complex function.
 set -u
 . "$SIM/lib.sh"
-REPO=${SIM_REPO:-drew-simmons/factory-sim-ledger}
+REPO=${SIM_REPO:-drew-simmons/factory-sim-small-bug}
 VERIFY="$FACTORY/skills/verify/scripts/verify.sh"
 
 sh "$SIM/fixtures/ledger/scaffold.sh" "$WORK" "$REPO" || exit 2
@@ -37,7 +37,8 @@ check plan "plan.md exists beside the spec" test -n "$PLAN"
 check plan "plan has a valid waves block" waves_valid "${PLAN:-/dev/null}"
 check plan "every slice has a Branch and a Parent" sh -c "[ \$(grep -c '^- Branch: ' '$PLAN') -ge 1 ] && [ \$(grep -c '^- Branch: ' '$PLAN') -eq \$(grep -c '^- Parent: ' '$PLAN') ]"
 check plan "every slice has a Tracker url" sh -c "[ \$(grep -Ec '^- Tracker: <?https://github.com/' '$PLAN') -eq \$(grep -c '^- Branch: ' '$PLAN') ]"
-check plan "a tracking issue and one issue per slice carry the factory label" sh -c "[ \$(cd '$WORK' && gh issue list --label factory --state all --json number --jq length) -ge 2 ]"
+check plan "plan-check accepts the plan" plan_checks_out "${PLAN:-/dev/null}"
+check plan "a tracking issue and one issue per slice carry the factory label" test "$(issue_new)" -ge 2
 check plan "no PR was opened by planning" test "$(pr_new)" = 0
 BRANCH=$(slice_branch 01)
 PARENT=$(slice_parent 01)
@@ -61,11 +62,8 @@ stage simplify "/factory:simplify" 12
 snap simplify
 check simplify "tests are untouched by simplify" sh -c "[ -z \"\$(git status --porcelain -- tests)\" ] && [ \"\$(git rev-parse HEAD:tests)\" = '$TESTS_BEFORE' ]"
 check simplify "verify is green after simplify" green_matches
-if ! tracked_clean; then
-  stage simplify-commit "Commit the simplification on the current branch with a conventional commit message. Do not touch tests."
-  check simplify "simplification was committed" tracked_clean
-  check simplify "the commit kept the tests" test "$(git rev-parse HEAD:tests)" = "$TESTS_BEFORE"
-fi
+check simplify "simplify committed its own change" tracked_clean
+check simplify "the commit kept the tests" test "$(git rev-parse HEAD:tests)" = "$TESTS_BEFORE"
 
 printf '\n== %s/verify-probes\n' "$RUN"
 rm -f .verify/green
@@ -125,10 +123,11 @@ gh pr list --head "$BRANCH" --state all --json number,url,baseRefName,isDraft,ti
 HEAD_BEFORE=$(git rev-parse HEAD)
 
 stage review "/factory:review" 12
-check review "review reported the Standards axis" grep -q '## Standards' "$RESULTS/review.result.md"
-check review "review reported the Spec axis" grep -q '## Spec' "$RESULTS/review.result.md"
-check review "review reported or skipped CodeRabbit" grep -Eq '## CodeRabbit|CodeRabbit' "$RESULTS/review.result.md"
-check review "review edited nothing" tree_clean
+check review "review wrote the handoff file" test -f "$(review_path 01)"
+check review "review file has the Standards axis" review_has 01 Standards
+check review "review file has the Spec axis" review_has 01 Spec
+check review "review file has the CodeRabbit axis" review_has 01 CodeRabbit
+check review "review edited nothing but its file" sh -c "[ -z \"\$(git status --porcelain | grep -v 'review-01.md')\" ]"
 check review "review committed nothing" test "$(git rev-parse HEAD)" = "$HEAD_BEFORE"
 check review "review posted no PR comment" sh -c "[ \$(gh pr view '$BRANCH' --json comments --jq '.comments | length') -eq 0 ]"
 

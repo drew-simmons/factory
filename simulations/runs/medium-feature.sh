@@ -5,7 +5,7 @@
 # the first slice's branch.
 set -u
 . "$SIM/lib.sh"
-REPO=${SIM_REPO:-drew-simmons/factory-sim-status}
+REPO=${SIM_REPO:-drew-simmons/factory-sim-medium-feature}
 
 sh "$SIM/fixtures/status/scaffold.sh" "$WORK" "$REPO" || exit 2
 cd "$WORK" || exit 2
@@ -34,7 +34,8 @@ check plan "plan has two slices" test "$(grep -c '^### 0[0-9] ' "${PLAN:-/dev/nu
 check plan "slice 02 is blocked by 01" sh -c "sed -n '/^### 02 /,/^### /p' '$PLAN' | grep -Eq '^- Blocked by: *01'"
 check plan "slice 02 stacks on slice 01's branch" test "$(slice_parent 02)" = "$(slice_branch 01)"
 check plan "every slice has a Tracker url" sh -c "[ \$(grep -Ec '^- Tracker: <?https://github.com/' '$PLAN') -eq 2 ]"
-check plan "a tracking issue and one issue per slice carry the factory label" sh -c "[ \$(cd '$WORK' && gh issue list --label factory --state all --json number --jq length) -ge 3 ]"
+check plan "plan-check accepts the plan" plan_checks_out "${PLAN:-/dev/null}"
+check plan "a tracking issue and one issue per slice carry the factory label" test "$(issue_new)" -ge 3
 B1=$(slice_branch 01)
 B2=$(slice_branch 02)
 P1=$(slice_parent 01)
@@ -75,10 +76,7 @@ stage simplify "/factory:simplify" 12
 snap simplify
 check simplify "tests are untouched by simplify" sh -c "[ -z \"\$(git status --porcelain -- test)\" ] && [ \"\$(git rev-parse HEAD:test)\" = '$TESTS_BEFORE' ]"
 check simplify "verify is green after simplify" green_matches
-if ! tracked_clean; then
-  stage simplify-commit "Commit the simplification on the current branch with a conventional commit message. Do not touch tests."
-  check simplify "simplification was committed" tracked_clean
-fi
+check simplify "simplify committed its own change" tracked_clean
 
 stage pr-02 "/factory:pr. I invoked this on purpose; open the PR for slice 02." 12
 check pr-02 "two PRs exist" test "$(pr_new)" = 2
@@ -89,9 +87,10 @@ gh pr list --state all --json number,url,baseRefName,headRefName,isDraft,title,b
 HEAD_BEFORE=$(git rev-parse HEAD)
 
 stage review "/factory:review" 12
-check review "review reported the Standards axis" grep -q '## Standards' "$RESULTS/review.result.md"
-check review "review reported the Spec axis" grep -q '## Spec' "$RESULTS/review.result.md"
-check review "review edited nothing" tree_clean
+check review "review wrote the handoff file" test -f "$(review_path 02)"
+check review "review file has the Standards axis" review_has 02 Standards
+check review "review file has the Spec axis" review_has 02 Spec
+check review "review edited nothing but its file" sh -c "[ -z \"\$(git status --porcelain | grep -v 'review-02.md')\" ]"
 check review "review committed nothing" test "$(git rev-parse HEAD)" = "$HEAD_BEFORE"
 
 summary

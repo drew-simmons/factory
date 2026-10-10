@@ -6,10 +6,12 @@
 # reply <name> <prompt> [budget]   one more turn in the session stage started
 # check <stage> <text> <cmd...>    record pass or FAIL for a predicate
 # snap <name>                      copy .verify and .factory out of $WORK
-# summary                          print the stage and check tables
+# summary                          print the tables; exit 1 when a check failed
 #
 # Every session loads the plugin from $FACTORY, auto-accepts edits, and
 # denies any tool a skill did not declare, so a denial is itself a finding.
+# Every stage also gets three checks for free: it did not error, it was not
+# denied a tool, and it did not run out of budget or time.
 RESULTS=$SIM/results/$RUN
 mkdir -p "$RESULTS"
 # The fixture checkout lives outside this repository: a path under .claude/
@@ -26,10 +28,26 @@ if [ "${SIM_APPEND:-0}" != "1" ]; then
 fi
 BUDGET=${SIM_BUDGET:-10}
 MODEL=${SIM_MODEL:-}
+STAGE_TIMEOUT=${SIM_STAGE_TIMEOUT:-1800}
 ALLOWED='Bash(git *) Bash(gh *) Bash(sh *) Bash(uv *) Bash(uvx *) Bash(pnpm *) Bash(npx *) Bash(poly-crap *) Bash(lawbook *) Bash(coderabbit *) Bash(cr *) Bash(jq *) Bash(python3 *) Bash(node *) Bash(cat *) Bash(ls *) Bash(mkdir *) Bash(cp *) Bash(mv *) Bash(rm *) Bash(sed *) Bash(grep *) Bash(wc *) Bash(head *) Bash(tail *) Bash(diff *) Bash(echo *) Bash(printf *) Bash(test *) Bash(true) Read Edit Write Glob Grep Agent Skill TodoWrite'
 SESSION=
 
-new_id() { uuidgen | tr 'A-Z' 'a-z'; }
+# The sessions must not inherit the user's global CLAUDE.md or settings (a
+# global "never push" once overrode an agent's push step), so they run with a
+# config directory that holds only the credentials. SIM_ISOLATE=0 opts out.
+if [ "${SIM_ISOLATE:-1}" = "1" ]; then
+  SOURCE_CONFIG=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
+  if [ -f "$SOURCE_CONFIG/.credentials.json" ]; then
+    mkdir -p "$RESULTS/claude-config"
+    cp "$SOURCE_CONFIG/.credentials.json" "$RESULTS/claude-config/"
+    CLAUDE_CONFIG_DIR=$RESULTS/claude-config
+    export CLAUDE_CONFIG_DIR
+  else
+    echo "lib: no $SOURCE_CONFIG/.credentials.json to copy; sessions inherit the user's config (SIM_ISOLATE=0 to silence)" >&2
+  fi
+fi
+
+new_id() { uuidgen | tr '[:upper:]' '[:lower:]'; }
 
 run_claude() {
   name=$1
@@ -41,7 +59,7 @@ run_claude() {
   (
     cd "$WORK" || exit 2
     # shellcheck disable=SC2086
-    claude -p --plugin-dir "$FACTORY" --permission-mode acceptEdits --permission-prompts none \
+    timeout "$STAGE_TIMEOUT" claude -p --plugin-dir "$FACTORY" --permission-mode acceptEdits --permission-prompts none \
       --allowedTools "$ALLOWED" --add-dir "$FACTORY" --output-format json --max-budget-usd "$budget" \
       ${MODEL:+--model "$MODEL"} "$@"
   ) >"$out" 2>"$RESULTS/$name.stderr"
@@ -54,9 +72,17 @@ run_claude() {
        (.permission_denials | length | tostring), (.subtype // "")] | @tsv' "$out" >>"$STAGES"
     jq -r '.result // ""' "$out" >"$RESULTS/$name.result.md"
     jq -c '.permission_denials[]?' "$out" >"$RESULTS/$name.denials.jsonl"
+    check "$name" "session ended without error" jq -e '.is_error == false' "$out"
+    check "$name" "no tool call was denied" jq -e '(.permission_denials | length) == 0' "$out"
+    check "$name" "session finished on its own (not budget or turn cap)" jq -e '.subtype == "success"' "$out"
   else
     printf '%s\t%s\t-\t-\t-\t%s\t-\tno-json\n' "$name" "$rc" "$took" >>"$STAGES"
     : >"$RESULTS/$name.result.md"
+    if [ "$rc" -eq 124 ]; then
+      check "$name" "session finished within $STAGE_TIMEOUT s" false
+    else
+      check "$name" "session produced a result (exit $rc)" false
+    fi
   fi
   tail -n 12 "$RESULTS/$name.result.md"
   return "$rc"
@@ -101,29 +127,40 @@ green_matches() {
   in_work sh "$FACTORY/skills/verify/scripts/verify.sh" >/dev/null 2>&1
 }
 pr_count() { in_work gh pr list --state all --json number --jq length; }
-# PRs opened since the run started; the throwaway repo may hold earlier runs.
-PR0=0
-baseline() { PR0=$(pr_count); }
-pr_new() { echo $(($(pr_count) - PR0)); }
-pr_field() { in_work gh pr list --head "$1" --state all --json "$2" --jq ".[0].$2"; }
 issue_count() { in_work gh issue list --label factory --state all --json number --jq length; }
+# PRs and issues opened since the run started; the throwaway repo may hold
+# earlier runs. Call baseline once, after the scaffold.
+PR0=0
+ISSUE0=0
+baseline() { PR0=$(pr_count); ISSUE0=$(issue_count); }
+pr_new() { echo $(($(pr_count) - PR0)); }
+issue_new() { echo $(($(issue_count) - ISSUE0)); }
+pr_field() { in_work gh pr list --head "$1" --state all --json "$2" --jq ".[0].$2"; }
 waves_valid() {
   sed -n '/^```json$/,/^```$/p' "$1" | sed '1d;$d' | jq -e '.waves | length > 0' >/dev/null
 }
+plan_checks_out() { python3 -I "$FACTORY/skills/plan/scripts/plan-check.py" "$1" >/dev/null; }
 open_questions_empty() {
   ! sed -n '/^## Open questions/,$p' "$1" | grep -Eq '^ *([0-9]+[.)]|- |\* )'
 }
 spec_path() { ls "$WORK"/docs/specs/*/spec.md 2>/dev/null | head -n 1; }
 plan_path() { ls "$WORK"/docs/specs/*/plan.md 2>/dev/null | head -n 1; }
+review_path() { echo "$(dirname "$(plan_path)")/review-$1.md"; }
+slice_count() { grep -Ec '^### [0-9][0-9] ' "$(plan_path)"; }
+slice_ids() { grep -E '^### [0-9][0-9] ' "$(plan_path)" | awk '{print $2}'; }
 slice_branch() { sed -n "/^### $1 /,/^### /{ s/^- Branch: *//p; }" "$(plan_path)" | head -n 1; }
 slice_parent() { sed -n "/^### $1 /,/^### /{ s/^- Parent: *//p; }" "$(plan_path)" | head -n 1 | sed 's|^origin/||'; }
+# review_has <NN> <section>: the review handoff file has that axis section.
+review_has() { grep -q "^## $2" "$(review_path "$1")"; }
 
 summary() {
   printf '\n== %s stages (name, exit, is_error, turns, usd, seconds, denials, subtype)\n' "$RUN"
   column -t -s "$(printf '\t')" "$STAGES"
   printf '\n== %s checks\n' "$RUN"
   column -t -s "$(printf '\t')" "$CHECKS"
-  printf '\n%s pass, %s fail\n' "$(grep -c '^pass' "$CHECKS")" "$(grep -c '^FAIL' "$CHECKS")"
+  failed=$(grep -c '^FAIL' "$CHECKS")
+  printf '\n%s pass, %s fail\n' "$(grep -c '^pass' "$CHECKS")" "$failed"
+  [ "$failed" -eq 0 ]
 }
 
 # disjoint_changes <base> <dir> <branch-a> <branch-b>: both branches changed
@@ -135,11 +172,18 @@ disjoint_changes() {
     && [ -z "$(comm -12 "$RESULTS/.changed-a" "$RESULTS/.changed-b")" ]
 }
 
-# release_worktrees: implementer agents leave their worktrees behind with the
-# slice branches checked out, which blocks `git switch` in the main checkout.
+# release_worktrees: any worktree an implementer agent left behind is released
+# through the plugin's own script, so its verify evidence lands in
+# .verify/slices/<NN>/ of the main checkout. A worktree the script refuses
+# (no commit, dirty) is removed anyway so the run can go on, and recorded.
 release_worktrees() {
   in_work git worktree list --porcelain | sed -n 's/^worktree //p' | tail -n +2 | while IFS= read -r path; do
-    in_work git worktree remove --force "$path"
+    branch=$(git -C "$path" branch --show-current)
+    id=$(printf '%s' "$branch" | sed -n 's|.*/\([0-9][0-9]\)-.*|\1|p')
+    if ! in_work sh "$FACTORY/skills/implement/scripts/release-worktree.sh" "$path" "${id:-unknown}"; then
+      printf 'FAIL\timplement-all\trelease-worktree accepted %s (%s)\n' "$path" "$branch" | tee -a "$CHECKS"
+      in_work git worktree remove --force "$path"
+    fi
   done
   in_work git worktree prune
 }
