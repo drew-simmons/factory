@@ -33,6 +33,12 @@ planner can slice and an implementer can test against.
 
 ## Factory rules
 
+- Shell discipline: one command per Bash call, with no `&&`, `;`, pipes,
+  redirects, or `$(...)`. A tool grant matches the command word, so a
+  compound command is denied whole, and one denied command is not a denied
+  tool: retry with a single, simpler command. Read exit codes and output
+  from the tool result. Create and edit files with the Write and Edit
+  tools, never a shell heredoc.
 - Read `factory.toml` for `spec_dir` (default `docs/specs`) and `base`.
   If `.kiro/specs/` exists and the user did not set `spec_dir`, use it.
 - Pick a short kebab-case slug. Reuse an existing spec directory when the

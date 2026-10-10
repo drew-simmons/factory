@@ -26,6 +26,13 @@ Before editing:
    needs a decision the spec does not make, stop and ask the parent. Do not
    guess.
 
+Shell discipline: one command per Bash call, with no `&&`, `;`, pipes,
+redirects, or `$(...)`; a compound command is denied whole, and one denied
+command is not a denied tool, so retry with a single, simpler command and
+never stop the slice over a denial. Run tests through the project's
+package manager (`uv run pytest`, `pnpm test`, `cargo test`, `go test`),
+never a bare `python` or `node`. Create and edit files with Write and Edit.
+
 Implement with the `factory:implement` skill's single-slice steps: for each
 acceptance check, write one failing test at an agreed seam, make it pass with
 the smallest change, run that file. Then run the full suite once and run the

@@ -10,6 +10,9 @@
 #
 # Every session loads the plugin from $FACTORY, auto-accepts edits, and
 # denies any tool a skill did not declare, so a denial is itself a finding.
+# The grants match the command word only: a compound command (&&, ;, a
+# pipe, $(...)) is denied whole, which is what the skills' shell discipline
+# rule exists for.
 # Every stage also gets three checks for free: it did not error, it was not
 # denied a tool, and it did not run out of budget or time.
 RESULTS=$SIM/results/$RUN
@@ -32,7 +35,7 @@ MODEL=${SIM_MODEL:-}
 # as skipped, so a run still exits 0 when everything it could test passed.
 FORGE=${SIM_FORGE:-1}
 STAGE_TIMEOUT=${SIM_STAGE_TIMEOUT:-1800}
-ALLOWED='Bash(git *) Bash(gh *) Bash(sh *) Bash(uv *) Bash(uvx *) Bash(pnpm *) Bash(npx *) Bash(poly-crap *) Bash(lawbook *) Bash(coderabbit *) Bash(cr *) Bash(jq *) Bash(python3 *) Bash(node *) Bash(cat *) Bash(ls *) Bash(mkdir *) Bash(cp *) Bash(mv *) Bash(rm *) Bash(sed *) Bash(grep *) Bash(wc *) Bash(head *) Bash(tail *) Bash(diff *) Bash(echo *) Bash(printf *) Bash(test *) Bash(true) Read Edit Write Glob Grep Agent Skill TodoWrite'
+ALLOWED='Bash(git *) Bash(gh *) Bash(sh *) Bash(uv *) Bash(uvx *) Bash(pnpm *) Bash(npx *) Bash(poly-crap *) Bash(lawbook *) Bash(coderabbit *) Bash(cr *) Bash(jq *) Bash(python3 *) Bash(node *) Bash(cat *) Bash(ls *) Bash(mkdir *) Bash(cp *) Bash(mv *) Bash(rm *) Bash(sed *) Bash(grep *) Bash(wc *) Bash(head *) Bash(tail *) Bash(diff *) Bash(echo *) Bash(printf *) Bash(test *) Bash(true) Bash(ls) Bash(pwd) Bash(python *) Bash(pytest *) Bash(find *) Bash(awk *) Bash(sort *) Bash(tr *) Bash(cut *) Bash(touch *) Bash(date *) Bash(timeout *) Read Edit Write Glob Grep Agent Skill TodoWrite'
 SESSION=
 
 # The sessions must not inherit the user's global CLAUDE.md or settings (a
@@ -163,6 +166,8 @@ review_path() { echo "$(dirname "$(plan_path)")/review-$1.md"; }
 slice_count() { grep -Ec '^### [0-9][0-9] ' "$(plan_path)"; }
 slice_ids() { grep -E '^### [0-9][0-9] ' "$(plan_path)" | awk '{print $2}'; }
 slice_branch() { sed -n "/^### $1 /,/^### /{ s/^- Branch: *//p; }" "$(plan_path)" | head -n 1; }
+# tracker_kind: what the fixture's factory.toml should say after setup.
+tracker_kind() { if [ "$FORGE" = 1 ]; then echo github; else echo local; fi; }
 slice_parent() { sed -n "/^### $1 /,/^### /{ s/^- Parent: *//p; }" "$(plan_path)" | head -n 1 | sed 's|^origin/||'; }
 # tracker_lines_filled: every slice has a Tracker line, a URL with the forge, a path without.
 tracker_lines_filled() {

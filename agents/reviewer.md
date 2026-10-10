@@ -12,6 +12,9 @@ The parent gives you the diff command, the commit list, the axis you own,
 and the material for that axis: the standards sources and smell baseline,
 or the spec contents.
 
+One git command per Bash call, with no pipes or `;`; a denied compound
+command is retried as a single command.
+
 Review the change:
 
 1. Read the applicable `AGENTS.md` or `CLAUDE.md` instructions.

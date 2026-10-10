@@ -32,6 +32,12 @@ reviewer, human or bot.
 
 ## Factory rules
 
+- Shell discipline: one command per Bash call, with no `&&`, `;`, pipes,
+  redirects, or `$(...)`. A tool grant matches the command word, so a
+  compound command is denied whole, and one denied command is not a denied
+  tool: retry with a single, simpler command. Read exit codes and output
+  from the tool result. Create and edit files with the Write and Edit
+  tools, never a shell heredoc.
 - Confirm the user invoked this skill. If the model reached it on its own,
   stop and ask.
 - Read `factory.toml` for `base`. Read `plan.md` for the slice's `Branch`,
