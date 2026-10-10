@@ -53,9 +53,17 @@ claude plugin eval . --threshold 0.8
 ```
 
 The eval cases under `evals/` check that `spec` fires on a feature
-request, that `pr` does not fire on its own, and that the verify script
-runs on a fixture repository. The last one needs `--scaffold` and Bash
-grants; see the comment at the top of its `scaffold.sh`.
+request, that `pr` does not fire on its own, that the verify script runs
+on a fixture repository and exits 0, that `plan` writes a plan
+`plan-check.py` accepts and asks before publishing, and that `review`
+writes its handoff file with the finding the fixture plants. The
+scaffolded cases need `--scaffold` and Bash grants; see the comment at the
+top of each `scaffold.sh`.
+
+The `evals` workflow runs the suite weekly and on demand when the
+repository has an `ANTHROPIC_API_KEY` secret, and uploads
+`evals/results/` as an artifact. Without the secret it skips and says
+so.
 
 ## This site
 

@@ -12,7 +12,8 @@ stage.
 |---|---|---|---|
 | `small-bug` | `ledger` (python, uv, pytest-cov) | one-function rounding bug, one slice | setup, spec, plan, implement, simplify, pr, review, plus verify.sh probes: stamp, floor, poly-crap |
 | `medium-feature` | `status` (typescript, pnpm, vitest, tsc) | a `--json` flag, two stacked slices | the node stack path, a PR whose base is the previous slice |
-| `large-feature` | `ledger` | monthly statement, four slices in three waves | `implement --all` with implementer agents in worktrees, one PR per slice on its parent |
+| `large-feature` | `ledger` | monthly statement, four slices in three waves | `implement --all` with implementer agents in worktrees, `pr --stack`, review fed back through `implement --from-review` |
+| `orchestrated` | `ledger` | the large feature driven by `/factory:run large` alone | one skill sequences every stage, each human gate is a fresh session resuming from `run.md` |
 
 ## Running one
 

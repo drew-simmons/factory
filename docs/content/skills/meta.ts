@@ -11,6 +11,8 @@ export default defineMeta({
     "verify",
     "pr",
     "review",
+    "run",
+    "steward",
     "explain-diff",
   ],
 });

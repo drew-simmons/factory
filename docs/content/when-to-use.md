@@ -43,8 +43,10 @@ Three questions decide how much of the loop a change needs:
 | Build | Edit directly. Use TDD when a seam exists. | `/factory:implement 01`. | `/factory:implement --all` in worktrees. |
 | Clean | `/factory:simplify`, optional. | `/factory:simplify`. | `/factory:simplify` per slice, before its PR. |
 | Gate | `/factory:verify`. | Built into implement; `--loop` arms the Stop hook. | Per slice, by the implementer agent. |
-| Ship | Commit on a branch. `/factory:pr` is optional. | `/factory:pr`. | `/factory:pr` per slice, stacked. `--babysit` is optional. |
-| Review | Optional. | `/factory:review`. | `/factory:review` per PR. |
+| Ship | Commit on a branch. `/factory:pr` is optional. | `/factory:pr`. | `/factory:pr --stack`. |
+| Review | Optional. | `/factory:review`, then `/factory:implement 01 --from-review`. | `/factory:review` per slice, then `--from-review`. |
+| Drive it | `/factory:verify` by hand. | `/factory:run medium <request>`. | `/factory:run large <request>`. |
+| After the PR | Merge. | `/factory:steward` to merge-ready, then merge. | `/factory:steward` per frontier, then merge. |
 
 Line count is a weak signal. A hundred-line change that adds one well
 understood endpoint is medium. A ten-line change to a shared type that
@@ -157,13 +159,21 @@ verifies, commits on its branch, and pushes. When a wave finishes, the
 frontier is recomputed and the next wave starts. Two slices with
 overlapping write sets never run at once.
 
-`/factory:pr` opens one PR per slice, each against its parent branch, so
-the stack reads bottom up. `--babysit` works the lowest unmerged PR first
-through conflicts, review threads, and CI, and stops at merge-ready.
-`/factory:review` runs per PR.
+`/factory:pr --stack` opens one PR per slice, each against its parent
+branch, so the stack reads bottom up. `/factory:review` runs per slice and
+writes `review-NN.md`; `/factory:implement NN --from-review` fixes what it
+found. `/factory:steward` works the lowest unmerged PR first through
+conflicts, review threads, and CI, restacks when a parent merges, and
+stops at merge-ready.
+
+`/factory:run large <request>` does all of that in order and stops only at
+the three human gates: the spec's open questions, the plan's approval,
+and the go for the PRs. A later session's `/factory:run` picks up from
+`run.md`.
 
 What the human sees: the spec's open questions, the slice breakdown and
-wave table, a table of branches and verify results, and a stack of PRs.
+wave table, a table of branches and verify results, a stack of PRs, and
+the review findings left for a human call.
 
 ## Signals you sized it wrong
 

@@ -14,7 +14,12 @@ flowchart TD
   implement --> simplify["/factory:simplify"] --> verify{"/factory:verify"}
   verify -- fails --> implement
   verify -- green --> pr["/factory:pr"] --> review["/factory:review"]
+  pr --> steward["/factory:steward"]
 ```
+
+`/factory:run <size>` runs the loop end to end for one change and stops
+only at the human gates below; `/factory:steward` takes over once the
+PRs are open.
 
 Every stage reads `factory.toml` first and falls back to detection when a
 key is missing. Every stage after `spec` reads the files the earlier
@@ -33,6 +38,8 @@ could not pick up from disk.
 | `verify` | The diff against `base`, `factory.toml` `[verify]` | `.verify/summary.txt`, `crap.json`, `lawbook.json`, `green` |
 | `pr` | `plan.md`, `.verify/summary.txt`, `.verify/green` | A PR on the forge |
 | `review` | The diff against the slice's parent, `spec.md` | `<spec_dir>/<slug>/review-NN.md`, findings in the reply |
+| `run` | `run.md`, everything the stages wrote | `<spec_dir>/<slug>/run.md` |
+| `steward` | `plan.md`, the forge | Pushes on the frontier branch, thread replies |
 
 `spec_dir` defaults to `docs/specs`. `base` defaults to `origin/main`.
 
@@ -131,7 +138,7 @@ a path and line, never reranked across axes. The reply names what
 
 1. Answer the spec's open questions.
 2. Approve the plan before it publishes.
-3. Start `/factory:pr`.
-4. Merge.
+3. Start `/factory:pr` (or give `/factory:run` the go).
+4. Merge, once `/factory:steward` reports the frontier merge-ready.
 
 Everything between those four is the agent's.

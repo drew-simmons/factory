@@ -14,16 +14,18 @@ description: One page per skill. Each skill is a portable SKILL.md wrapper over 
 | [`simplify`](./simplify) | Removes slop and needless complexity from the diff without changing behavior. Ends in verify. | edits |
 | [`verify`](./verify) | Floor, typecheck, lint, format, lawbook, tests with coverage, poly-crap, in that order. Fix only what it names until exit 0. | `.verify/` |
 | [`pr`](./pr) | Opens one PR per slice against its parent branch with real evidence. Never draft, never merge. | a PR |
-| [`review`](./review) | Standards and spec axes in parallel read-only agents, plus CodeRabbit CLI when authenticated. | findings |
+| [`review`](./review) | Standards and spec axes in parallel read-only agents, plus CodeRabbit CLI when authenticated. | `review-NN.md`, findings |
+| [`run`](./run) | Drives every stage a size needs, stops only at the human gates, resumes from disk. | `run.md` |
+| [`steward`](./steward) | Works the lowest unmerged PR of a stack through conflicts, threads, and CI; restacks after a parent merges. Never merges. | pushes, thread replies |
 | [`explain-diff`](./explain-diff) | Writes a rich, interactive HTML explanation of a change, diff, branch, or PR. Outside the loop. | `.temp/<date>-explanation-<slug>.html` |
 
 ## Who may start a skill
 
-Three skills say in their description that only the user may start them:
-`setup`, `plan` (for publishing), and `pr`. The frontmatter stays within
-the Agent Skills spec, so there is no `disable-model-invocation` key; the
-description and the first step carry the rule. Every other skill fires on
-its own when the request matches its description.
+Four skills say in their description that only the user may start them: `setup`,
+`plan` (for publishing), `pr`, and `run` (which reaches `pr`). The frontmatter
+stays within the Agent Skills spec, so there is no `disable-model-invocation`
+key; the description and the first step carry the rule. Every other skill fires
+on its own when the request matches its description.
 
 ## How a skill page is organized
 
