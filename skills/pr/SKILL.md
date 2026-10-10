@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires git and an authenticated gh (GitHub) or glab (GitLab).
 metadata:
   upstream: "cursor-plugins/pstack-playbooks, mattpocock-skills/pr, coderabbitai-skills/review"
-allowed-tools: Bash(git:*) Bash(gh:*) Bash(glab:*) Read Write
+allowed-tools: Bash(git:*) Bash(gh:*) Bash(glab:*) Bash(python3 ${CLAUDE_PLUGIN_ROOT}/skills/plan/scripts/plan-check.py *) Read Write
 ---
 
 # pr
@@ -49,6 +49,13 @@ reviewer, human or bot.
 - Never `--draft`. Never merge. Never force-push. Never push `base`.
 - Reuse an open PR for the same head branch; update its body instead of
   opening a second one.
+- `--stack`: run steps 1 to 6 once per slice, bottom up, for every row of
+  `python3 ${CLAUDE_PLUGIN_ROOT}/skills/plan/scripts/plan-check.py <plan.md>
+  --stack` whose branch exists (`git switch <branch>` first). Each body
+  carries a `## Stack` table, `NN | branch | parent | PR`, with the URLs
+  known so far; after the last PR, update the earlier bodies so every
+  table is complete. Stop at the first slice that refuses (red or dirty)
+  and report which PRs were opened.
 
 ## Steps
 
@@ -76,4 +83,5 @@ reviewer, human or bot.
 ## Done when
 
 The PR URL is posted, it targets the right parent, it is not a draft, and
-the body carries real verify evidence.
+the body carries real verify evidence. With `--stack`, one PR per existing
+slice branch, each with the same stack table.

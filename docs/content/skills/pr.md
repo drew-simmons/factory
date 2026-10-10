@@ -36,6 +36,15 @@ red tree, never opens drafts, and never merges.
    run, stop and post the URL. Otherwise say no bot review is configured
    and suggest `/factory:review`.
 
+## --stack
+
+`/factory:pr --stack` runs the steps above once per slice, bottom up, for
+every slice in `plan.md` whose branch exists. Each body carries a stack
+table (`NN | branch | parent | PR`); once the last PR is open the earlier
+bodies are updated so every table is complete. The first slice that
+refuses, red or dirty, stops the walk, and the reply says which PRs were
+opened.
+
 ## --babysit
 
 With `--babysit`, work the lowest unmerged PR of the stack first, in the
