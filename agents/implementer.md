@@ -31,7 +31,11 @@ redirects, or `$(...)`; a compound command is denied whole, and one denied
 command is not a denied tool, so retry with a single, simpler command and
 never stop the slice over a denial. Run tests through the project's
 package manager (`uv run pytest`, `pnpm test`, `cargo test`, `go test`),
-never a bare `python` or `node`. Create and edit files with Write and Edit.
+never a bare `python` or `node`. Create and edit files with Write and Edit:
+your worktree may live under `.claude/worktrees/`, where a Bash write (`cp`,
+`tee`, a redirect, a Python one-liner) is denied as a config edit. That
+includes bringing `<spec_dir>/<slug>/` into the worktree: Read each file at
+the path the parent gave and Write it.
 
 Implement with the `factory:implement` skill's single-slice steps: for each
 acceptance check, write one failing test at an agreed seam, make it pass with

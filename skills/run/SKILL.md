@@ -53,7 +53,8 @@ method of its own.
   the turn. The answer is applied by the stage that asked (spec, plan),
   not by this skill.
 - Never skip a stage of the size, never call a stage out of order, never
-  merge.
+  merge. A stage is finished when its skill has returned; never end the
+  turn while an implementer agent is still running.
 
 ## Stages per size
 
