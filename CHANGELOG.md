@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- `/factory:run <size>` drives every stage a small, medium, or large change
+  needs, stops only at the human gates, and resumes from
+  `<spec_dir>/<slug>/run.md` in a later session.
+- `/factory:steward` replaces `pr --babysit`: it works the lowest unmerged
+  PR of a stack through conflicts, review threads, and CI, restacks a
+  slice whose parent merged, and never merges. `stack-status.sh` reads
+  the stack from the forge and names the frontier.
+- Evals: the verify case grants the tools it needs and checks the exit
+  code; new cases for `plan` (plan-check accepts the result, no publish
+  before approval) and `review` (the handoff file with the planted
+  finding); an `evals` workflow runs the suite weekly when an
+  `ANTHROPIC_API_KEY` secret exists.
 - `plan-check.py` in the plan skill reads `plan.md` and fails on a slice
   blocked by two independent chains, a Parent that is not the base or a
   slice branch, a parent slice missing from `Blocked by`, or waves that

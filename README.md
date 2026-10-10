@@ -9,12 +9,14 @@ flowchart TD
   implement --> simplify["/factory:simplify"] --> verify{"/factory:verify"}
   verify -- fails --> implement
   verify -- green --> pr["/factory:pr"] --> review["/factory:review"]
+  pr --> steward["/factory:steward"]
 ```
 
-The point is to cut the babysitting. The human agrees a spec and a plan,
-then the agent works slices one at a time or in parallel worktrees, each
-slice ending in a verification loop that it cannot talk its way out of, and
-each landing as one PR in a stack.
+`/factory:run <size>` drives that loop end to end and stops only at the human
+gates. The point is to cut the babysitting. The human agrees a spec and a plan,
+then the agent works slices one at a time or in parallel worktrees, each slice
+ending in a verification loop that it cannot talk its way out of, and each
+landing as one PR in a stack.
 
 The docs site at <https://drew-simmons.github.io/factory> has a guide on
 when to reach for factory and one page per skill.
@@ -59,13 +61,15 @@ SessionStart hook prints which ones are present.
 | `simplify` | Removes slop and needless complexity from the diff without changing behavior. Ends in verify. | edits |
 | `verify` | Floor, typecheck, lint, format, lawbook, tests with coverage, poly-crap, in that order. Fix only what it names until exit 0. | `.verify/` |
 | `pr` | Opens one PR per slice against its parent branch with real evidence. Never draft, never merge. | a PR |
-| `review` | Standards and spec axes in parallel read-only agents, plus CodeRabbit CLI when authenticated. | findings |
+| `review` | Standards and spec axes in parallel read-only agents, plus CodeRabbit CLI when authenticated. Writes the handoff `implement --from-review` reads. | `review-NN.md`, findings |
+| `run` | Drives every stage a size needs (small, medium, large), stops only at the human gates, resumes from `run.md`. | `run.md` |
+| `steward` | Works the lowest unmerged PR of a stack through conflicts, review threads, and CI; restacks a slice whose parent merged. Never merges. | pushes, thread replies |
 | `explain-diff` | Writes a rich, interactive HTML explanation of a change, diff, branch, or PR with background, intuition, code walkthrough, and quiz. Outside the loop. | `.temp/<date>-explanation-<slug>.html` |
 
-Three skills say in their description that only the user may start them:
-`setup`, `plan` (for publishing), and `pr`. The frontmatter stays within the
-Agent Skills spec, so there is no `disable-model-invocation` key; the
-description and the first step carry the rule.
+Four skills say in their description that only the user may start them: `setup`,
+`plan` (for publishing), `pr`, and `run` (which reaches `pr`). The frontmatter
+stays within the Agent Skills spec, so there is no `disable-model-invocation`
+key; the description and the first step carry the rule.
 
 ## factory.toml
 

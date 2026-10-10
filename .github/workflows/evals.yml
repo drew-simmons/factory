@@ -1,0 +1,67 @@
+name: evals
+
+# The eval cases spend model budget, so they run on a schedule and by hand,
+# never on every PR, and only when the repository has an ANTHROPIC_API_KEY
+# secret. Results land as an artifact.
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  POLY_CRAP_VERSION: v0.8.2
+  LAWBOOK_VERSION: 0.3.1
+  CLAUDE_CODE_VERSION: 2.1.296
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Key present
+        id: key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "no ANTHROPIC_API_KEY secret; skipping the evals"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.key.outputs.present == 'true'
+
+      - uses: astral-sh/setup-uv@v6
+        if: steps.key.outputs.present == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.key.outputs.present == 'true'
+        with:
+          node-version: 22
+
+      - name: Install poly-crap, lawbook, and Claude Code
+        if: steps.key.outputs.present == 'true'
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf "https://github.com/drew-simmons/poly-crap/releases/download/${POLY_CRAP_VERSION}/poly-crap-installer.sh" | sh
+          npm install --global "lawbook@${LAWBOOK_VERSION}" "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+
+      - name: Run the eval suite
+        if: steps.key.outputs.present == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          claude plugin eval . --threshold 0.8 --scaffold \
+            --allow-tools Write "Bash(sh *)" "Bash(uv *)" "Bash(uvx *)" "Bash(poly-crap *)" "Bash(jq *)" "Bash(git *)" "Bash(python3 *)" \
+            --output-dir evals/results
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.key.outputs.present == 'true'
+        with:
+          name: eval-results
+          path: evals/results
+          if-no-files-found: ignore
