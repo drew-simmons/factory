@@ -160,8 +160,17 @@ plan_checks_out() { python3 -I "$FACTORY/skills/plan/scripts/plan-check.py" "$1"
 open_questions_empty() {
   ! sed -n '/^## Open questions/,$p' "$1" | grep -Eq '^ *([0-9]+[.)]|- |\* )'
 }
-spec_path() { ls "$WORK"/docs/specs/*/spec.md 2>/dev/null | head -n 1; }
-plan_path() { ls "$WORK"/docs/specs/*/plan.md 2>/dev/null | head -n 1; }
+# spec_path and plan_path: the files in the checkout, else the copy a run saved
+# under $RESULTS/parent-docs before cleaning the untracked spec directory.
+spec_path() { ls "$WORK"/docs/specs/*/spec.md "$RESULTS"/parent-docs/specs/*/spec.md 2>/dev/null | head -n 1; }
+plan_path() { ls "$WORK"/docs/specs/*/plan.md "$RESULTS"/parent-docs/specs/*/plan.md 2>/dev/null | head -n 1; }
+# committed_slices: ids whose branch has a commit past its parent.
+committed_slices() {
+  for id in $(slice_ids); do
+    b=$(slice_branch "$id"); p=$(slice_parent "$id")
+    [ "$(in_work git rev-parse "$b" 2>/dev/null)" != "$(in_work git rev-parse "$p" 2>/dev/null)" ] && echo "$id"
+  done
+}
 review_path() { echo "$(dirname "$(plan_path)")/review-$1.md"; }
 slice_count() { grep -Ec '^### [0-9][0-9] ' "$(plan_path)"; }
 slice_ids() { grep -E '^### [0-9][0-9] ' "$(plan_path)" | awk '{print $2}'; }

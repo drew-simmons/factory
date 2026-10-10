@@ -36,16 +36,22 @@ WAVE0=$(sed -n '/^```json$/,/^```$/p' "$PLAN" | sed '1d;$d' | jq -r '.waves[0].s
 
 stage implement-all "/factory:implement --all" 60
 snap implement-all
-check implement-all "implement released every agent worktree" test "$(git worktree list --porcelain | grep -c '^worktree ')" = 1
-check implement-all "implement kept per-slice verify evidence" sh -c "ls '$WORK'/.verify/slices/*/summary.txt >/dev/null 2>&1"
-check implement-all "implement cleaned the untracked spec copy" test -z "$(git status --porcelain --untracked-files=all -- docs)"
-release_worktrees
 cp -R "$WORK/docs" "$RESULTS/parent-docs" 2>/dev/null
+DONE=$(committed_slices | wc -l)
+# A worktree may stay only for a slice that is not committed (kept red on purpose).
+check implement-all "implement released the worktree of every committed slice" test "$(($(git worktree list --porcelain | grep -c '^worktree ') - 1))" -le "$(($(slice_count) - DONE))"
+check implement-all "implement kept per-slice verify evidence" test "$(ls "$WORK"/.verify/slices/*/summary.txt 2>/dev/null | wc -l)" -ge "$DONE"
+if [ "$DONE" -eq "$(slice_count)" ]; then
+  check implement-all "implement cleaned the untracked spec copy" test -z "$(git status --porcelain --untracked-files=all -- docs)"
+fi
+check implement-all "every slice has a commit" test "$DONE" -eq "$(slice_count)"
+release_worktrees
 git clean -fdq -- docs
 for id in $SLICES; do
   b=$(slice_branch "$id")
   p=$(slice_parent "$id")
   check implement-all "slice $id branch $b exists" branch_exists "$b"
+  committed_slices | grep -qx "$id" || { check implement-all "slice $id was committed (kept red by the implementer otherwise)" false; continue; }
   check implement-all "slice $id branch descends from its parent $p" sh -c "git merge-base --is-ancestor '$p' '$b'"
   check implement-all "slice $id has its own commit" test "$(git rev-parse "$b" 2>/dev/null)" != "$(git rev-parse "$p" 2>/dev/null)"
   check implement-all "slice $id commit cites the slice" sh -c "git log -1 --format=%s '$b' | grep -Eq '\($id, R[0-9]'"
@@ -58,8 +64,9 @@ else
   check implement-all "wave 0 holds two slices to compare" false
 fi
 check implement-all "implementer agents were spawned" sh -c "jq -e '.subagent_stats.spawned >= 2' '$RESULTS/implement-all.json'"
-check implement-all "every slice has a verify summary in .verify/slices" test "$(ls "$RESULTS"/implement-all.verify/slices/*/summary.txt 2>/dev/null | wc -l)" -ge "$(slice_count)"
-LAST=$(printf '%s\n' $SLICES | tail -n 1)
+check implement-all "every committed slice has a verify summary in .verify/slices" test "$(ls "$RESULTS"/implement-all.verify/slices/*/summary.txt 2>/dev/null | wc -l)" -ge "$DONE"
+LAST=$(committed_slices | tail -n 1)
+[ -n "$LAST" ] || LAST=$(printf '%s\n' $SLICES | head -n 1)
 LAST_BRANCH=$(slice_branch "$LAST")
 git switch -q "$LAST_BRANCH"
 check implement-all "the last slice branch is checked out" on_branch "$LAST_BRANCH"
