@@ -48,7 +48,9 @@ method of its own.
   `Stage` other than `done`. Refuse to start a second run while one is
   open; name it.
 - Write `run.md` before and after every stage, with a log line. Nothing
-  about the position lives in the conversation.
+  about the position lives in the conversation. `Stage` and `Waiting on`
+  take exactly the template's values (`Waiting on: pr`, not a sentence);
+  other skills and the simulations read them literally.
 - At a human gate, write `Waiting on`, ask with AskUserQuestion, and end
   the turn. The answer is applied by the stage that asked (spec, plan),
   not by this skill.

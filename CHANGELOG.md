@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Every skill and both agents carry a shell discipline rule: one command
+  per Bash call, no chains, pipes, redirects, or substitution, files
+  through Write and Edit; a denied command is retried, not treated as a
+  denied tool. `implement --all` names `run_in_background: false` and the
+  loop resumes from disk when an agent is orphaned anyway; the plan skill
+  names the behavioural dependency `plan-check` cannot see; `run.md` fields
+  take the template's values literally.
+- Simulations run without GitHub with `SIM_FORGE=0` (local bare origin,
+  local tracker, forge checks skipped), resume a run or an `implement
+  --all` that ended its turn mid-slice, and tolerate a slice the
+  implementer kept red. Report for the four 2026-10-10 batches.
+
 ## 0.5.0 (2026-10-10)
 
 - `/factory:run <size>` drives every stage a small, medium, or large change
