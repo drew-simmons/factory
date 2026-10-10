@@ -28,8 +28,11 @@ review. Scope is the diff against `base` only. It ends by running
 3. After every edit, run the file's tests. Revert an edit that changes a
    test result.
 4. Run `/factory:verify`. Fix only what it names.
-5. Reply in one to three sentences: what was removed, what was kept and
-   why, and the verify result.
+5. When verify is green and the diff is not empty, commit as
+   `refactor(<scope>): simplify slice NN`. Never amend. A red tree stays
+   uncommitted and is reported.
+6. Reply in one to three sentences: what was removed, what was kept and
+   why, the verify result, and the commit.
 
 ## Rules
 
@@ -47,7 +50,7 @@ review. Scope is the diff against `base` only. It ends by running
 ## Done when
 
 The diff is smaller or plainer than before, every test passes unchanged,
-and `/factory:verify` exited 0.
+`/factory:verify` exited 0, and the simplification is committed.
 
 ## Upstream
 

@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires git and the repository's test runner. Parallel mode needs git worktree support.
 metadata:
   upstream: "mattpocock-skills/tdd, mattpocock-skills/implement, cursor-plugins/pstack-principles"
-allowed-tools: Bash(git:*) Read Edit Write Glob Grep
+allowed-tools: Bash(git:*) Bash(sh ${CLAUDE_SKILL_DIR}/scripts/release-worktree.sh *) Read Edit Write Glob Grep
 ---
 
 # implement
@@ -45,6 +45,8 @@ its own worktree.
   suppression to get green; `/factory:verify` treats those as failures.
 - Commit per slice with a conventional message that cites the slice id and
   requirement ids, for example `feat(auth): add session refresh (02, R3)`.
+- Slice status (claimed, done) lives in the tracker item or issue file,
+  never in `plan.md`.
 
 ## Steps
 
@@ -65,18 +67,33 @@ Single slice (`/factory:implement <NN>`):
    never meets an untracked plan. Mark the slice done. Reply with the
    branch, the commit, the tests added, and the verify result.
 
+Review fixes (`/factory:implement <NN> --from-review`):
+
+1. Read `<spec_dir>/<slug>/review-NN.md`. Every unchecked `[P0]` to `[P2]`
+   item is an acceptance check for this run; `[P3]` items stay as they are
+   and are listed in the reply as deferred.
+2. On the slice branch, run step 3 above for each item: a failing test at
+   the seam where one exists, then the smallest fix. Tick the box.
+3. Run the full suite, then `/factory:verify --loop` until 0. Commit the
+   fixes with the review file as `fix(<scope>): address review (NN, R..)`.
+
 All frontier slices (`/factory:implement --all`):
 
 1. Compute the frontier from `plan.md`: slices whose blockers are all done.
 2. For each frontier slice spawn one `factory:implementer` agent in a
    worktree with the slice id, spec path, plan path, branch, and parent.
    Never run two slices with overlapping write sets at once.
-3. When an agent reports done, confirm its branch is green, remove the
-   agent's worktree (`git worktree remove <path>`) so the branch can be
-   checked out here, mark the slice done, recompute the frontier, and
-   spawn the next wave. Nothing is pushed until `/factory:pr`.
-4. Reply with a table of slices, branches, and verify results, and point at
-   `/factory:pr` for the stack.
+3. When an agent reports done, run
+   `sh ${CLAUDE_SKILL_DIR}/scripts/release-worktree.sh <worktree> <NN>`: it
+   copies the agent's `.verify/` evidence to `.verify/slices/NN/`, refuses a
+   branch with no commit or a dirty tree, and removes the worktree so the branch
+   can be checked out here. Then mark the slice done, recompute the frontier,
+   and spawn the next wave. Nothing is pushed until `/factory:pr`.
+4. Remove the untracked copy of `<spec_dir>/<slug>/` from this checkout
+   when every slice commit carries it (`git clean -fd -- <spec_dir>/<slug>`),
+   so the slice branches can be checked out. Reply with a table of slices,
+   branches, and verify results from `.verify/slices/`, and point at
+   `/factory:pr --stack`.
 
 ## Done when
 

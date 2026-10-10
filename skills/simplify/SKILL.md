@@ -58,10 +58,13 @@ Make the change smaller and plainer while every test keeps passing.
 3. After every edit run the file's tests. Revert an edit that changes a
    test result.
 4. Run `/factory:verify`. Fix only what it names.
-5. Reply in one to three sentences: what was removed, what was kept and
-   why, and the verify result.
+5. When verify is green and the diff against `HEAD` is not empty, commit
+   as `refactor(<scope>): simplify slice NN` (or `simplify <area>` off a
+   plan). Never amend. A red tree is left uncommitted and reported.
+6. Reply in one to three sentences: what was removed, what was kept and
+   why, the verify result, and the commit.
 
 ## Done when
 
 The diff is smaller or plainer than before, every test passes unchanged,
-and `/factory:verify` exited 0.
+`/factory:verify` exited 0, and the simplification is committed.

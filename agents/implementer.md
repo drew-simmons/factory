@@ -41,7 +41,8 @@ pushes the branch when the user asks for the PR.
 Report:
 
 - slice id and outcome (done, blocked, or stopped at the cap);
-- branch, commit sha, and the worktree path, so the parent can release it;
+- branch, commit sha, and the worktree path, so the parent can release it
+  with `release-worktree.sh` (leave `.verify/` in place; the parent copies it);
 - each acceptance check with the test that proves it;
 - verify exit code and a one-line summary of any remaining finding;
 - commands run and anything skipped.
