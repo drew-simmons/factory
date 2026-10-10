@@ -29,13 +29,22 @@ Each slice ends with `/factory:verify` and is never committed red.
 3. For each acceptance check: write one failing test at the agreed seam,
    confirm it fails for the right reason, write the smallest code that
    passes, run the file. One behavior per cycle.
-4. Run the full suite once. Write `.factory/loop.local.md` so the Stop
-   hook backstops the loop, then run `/factory:verify`. On exit 1, fix
-   only what it names and rerun, up to `max_iterations`.
+4. Run the full suite once, then `/factory:verify --loop`, which arms the
+   Stop hook before the first stage. On exit 1, fix only what it names and
+   rerun, up to `max_iterations`.
 5. Commit with a conventional message that cites the slice and
    requirement ids, for example `feat(auth): add session refresh (02, R3)`.
    Mark the slice done. Reply with the branch, the commit, the tests
    added, and the verify result.
+
+## Review fixes
+
+`/factory:implement <NN> --from-review` reads `<spec_dir>/<slug>/review-NN.md`
+written by `/factory:review`. Every unchecked P0 to P2 finding becomes an
+acceptance check: a failing test at the seam where one exists, then the
+smallest fix, then the box is ticked. P3 items stay unchecked and are
+listed as deferred. The run ends in `/factory:verify --loop` and one commit,
+`fix(<scope>): address review (NN, R..)`, that carries the review file.
 
 ## All frontier slices
 
@@ -44,10 +53,15 @@ Each slice ends with `/factory:verify` and is never committed red.
 2. For each frontier slice, spawn one `factory:implementer` agent in a
    worktree with the slice id, spec path, plan path, branch, and parent.
    Two slices with overlapping write sets never run at once.
-3. When an agent reports done, confirm its branch is green and pushed,
-   mark the slice done, recompute the frontier, and spawn the next wave.
-4. Reply with a table of slices, branches, and verify results, and point
-   at `/factory:pr` for the stack.
+3. When an agent reports done, release its worktree with the skill's
+   `scripts/release-worktree.sh <worktree> <NN>`. The script copies the
+   agent's `.verify/` evidence to `.verify/slices/NN/`, refuses a branch
+   with no commit or a dirty tree, and removes the worktree so the branch
+   can be checked out in the main checkout. Then mark the slice done,
+   recompute the frontier, and spawn the next wave.
+4. Remove the untracked spec copy from the main checkout once every slice
+   commit carries it. Reply with a table of slices, branches, and verify
+   results, and point at `/factory:pr --stack`.
 
 The implementer agent completes exactly one slice. It stops and asks the
 parent when a slice conflicts with the spec, has no verifiable outcome,
@@ -62,6 +76,8 @@ or touches the parent branch.
   suppression to get green; verify treats those as failures.
 - Refactoring stays out of the red-green loop. It belongs to
   `/factory:simplify`.
+- Slice status lives in the tracker item or issue file, never in
+  `plan.md`.
 
 ## Done when
 
