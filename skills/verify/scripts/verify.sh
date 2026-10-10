@@ -339,6 +339,19 @@ for cfg in factory.toml .poly-crap.toml lawbook.yaml; do
 done
 [ "$status" -eq 0 ] && note "  clean"
 
+# A plan that changed must still describe a linear stack: the same rules
+# the plan skill applied before publishing, so a hand edit cannot undo them.
+CHANGED_PLANS=$(changed_files "$FACTORY_SPEC_DIR/*/plan.md")
+if [ -n "$CHANGED_PLANS" ]; then
+  stage "0b plan: slices stack and waves agree"
+  for plan in $CHANGED_PLANS; do
+    python3 -I "$HERE/../../plan/scripts/plan-check.py" "$plan" >"$OUT/stage.log" 2>&1
+    record $?
+    tee -a "$OUT/summary.txt" <"$OUT/stage.log"
+    rm -f "$OUT/stage.log"
+  done
+fi
+
 stage "1  typecheck or syntax on changed files"
 if [ -z "$CHANGED_SRC" ]; then skip "no changed source files"
 elif [ -z "$CMD_TYPECHECK" ]; then skip "no typecheck command for stack $STACK"
@@ -387,9 +400,11 @@ else
   poly-crap "$@" --diff-base "$BASE" --fail-above --output "$OUT/crap.json" 2>"$OUT/crap.err"
   record $?
   grep -v '^$' "$OUT/crap.err" | head -n 5; rm -f "$OUT/crap.err"
+  # crap_rows <report> <empty message> [<report whose entries to leave out>]
   crap_rows() {
-    jq -r --argjson t "$THRESHOLD" --arg none "$2" '
-      [.entries[] | select(.score > $t)]
+    jq -r --argjson t "$THRESHOLD" --arg none "$2" --slurpfile seen "${3:-/dev/null}" '
+      ($seen | map(.entries[]? | "\(.file):\(.start_line):\(.symbol)")) as $known
+      | [.entries[] | select(.score > $t) | select(("\(.file):\(.start_line):\(.symbol)" | IN($known[])) | not)]
       | if length == 0 then $none
         else .[] | "  \(.file | ltrimstr("./")):\(.start_line) \(.symbol)  CRAP \((.score * 10 | round) / 10)  CC \(.complexity | round)  coverage \(if .coverage == null then "none" else "\(.coverage | round)%" end)"
         end
@@ -401,7 +416,7 @@ else
   if tests_changed; then
     poly-crap "$@" --path . --output "$OUT/crap-full.json" >/dev/null 2>&1
     note "  test files changed; every function was scored, entries outside the diff are advisory:"
-    crap_rows "$OUT/crap-full.json" "  no function scores above $THRESHOLD"
+    crap_rows "$OUT/crap-full.json" "  no function outside the diff scores above $THRESHOLD" "$OUT/crap.json"
   fi
 fi
 

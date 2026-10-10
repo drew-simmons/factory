@@ -69,3 +69,8 @@ Rules:
   a screen state.
 - No file paths or code in slices; they go stale. A prototype snippet that
   encodes a decision is the one exception.
+- `scripts/plan-check.py <plan.md>` reads exactly these headings and
+  fields. It fails on a slice blocked by two independent chains, a `Parent`
+  that is not `base` or another slice's `Branch`, a parent slice missing
+  from `Blocked by`, a slice in no wave or two, and a wave that holds a
+  slice with its blocker. `--stack` prints `NN branch parent` per slice.

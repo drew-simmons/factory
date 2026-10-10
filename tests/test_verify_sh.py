@@ -211,8 +211,12 @@ def test_planned_slice_is_measured_against_its_parent(repo: Path):
     plan = repo / "docs" / "specs" / "stack" / "plan.md"
     plan.parent.mkdir(parents=True)
     plan.write_text(
-        "# stack plan\n\n### 01 parent\n\n- Branch: feature\n- Parent: main\n\n"
-        "### 02 child\n\n- Branch: feature-02\n- Parent: feature\n"
+        "# stack plan\n\nBase: main\n\n## Slices\n\n"
+        "### 01 parent\n\n- Requirements: R1\n- Blocked by: none\n- Branch: feature\n"
+        "- Parent: main\n- Acceptance:\n  - [ ] a\n\n"
+        "### 02 child\n\n- Requirements: R2\n- Blocked by: 01\n- Branch: feature-02\n"
+        "- Parent: feature\n- Acceptance:\n  - [ ] b\n\n"
+        '## Waves\n\n```json\n{"waves": [{"id": 0, "slices": ["01"]}, {"id": 1, "slices": ["02"]}]}\n```\n'
     )
     (repo / "src" / "fixture.py").write_text(
         (repo / "src" / "fixture.py").read_text()
@@ -431,3 +435,37 @@ def test_exclude_globs_reach_poly_crap(repo: Path):
     result = run_verify(repo, BASE="feature")
     assert result.returncode == 0, result.stdout + result.stderr
     assert "classify" not in result.stdout
+
+
+@needs_tools
+def test_a_changed_plan_with_a_diamond_fails_the_plan_stage(repo: Path):
+    plan = repo / "docs" / "specs" / "f" / "plan.md"
+    plan.parent.mkdir(parents=True)
+    plan.write_text(
+        "# f plan\n\nBase: main\n\n## Slices\n\n"
+        "### 01 A\n\n- Requirements: R1\n- Blocked by: none\n- Branch: f/01\n- Parent: main\n"
+        "- Acceptance:\n  - [ ] a\n\n"
+        "### 02 B\n\n- Requirements: R2\n- Blocked by: none\n- Branch: f/02\n- Parent: main\n"
+        "- Acceptance:\n  - [ ] b\n\n"
+        "### 03 C\n\n- Requirements: R3\n- Blocked by: 01, 02\n- Branch: f/03\n- Parent: f/02\n"
+        "- Acceptance:\n  - [ ] c\n\n"
+        '## Waves\n\n```json\n{"waves": [{"id": 0, "slices": ["01", "02"]}, {"id": 1, "slices": ["03"]}]}\n```\n'
+    )
+    result = run_verify(repo)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "0b plan" in result.stdout
+    assert "slice 03" in result.stdout and "not an ancestor of its Parent 02" in result.stdout
+    plan.write_text(
+        plan.read_text()
+        .replace(
+            "- Blocked by: none\n- Branch: f/02\n- Parent: main",
+            "- Blocked by: 01\n- Branch: f/02\n- Parent: f/01",
+        )
+        .replace(
+            '[{"id": 0, "slices": ["01", "02"]}, {"id": 1, "slices": ["03"]}]',
+            '[{"id": 0, "slices": ["01"]}, {"id": 1, "slices": ["02"]}, {"id": 2, "slices": ["03"]}]',
+        )
+    )
+    fixed = run_verify(repo)
+    assert fixed.returncode == 0, fixed.stdout + fixed.stderr
+    assert "stack is linear" in fixed.stdout
