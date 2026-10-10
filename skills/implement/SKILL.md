@@ -88,7 +88,10 @@ All frontier slices (`/factory:implement --all`):
 1. Compute the frontier from `plan.md`: slices whose blockers are all done.
 2. For each frontier slice spawn one `factory:implementer` agent in a
    worktree with the slice id, spec path, plan path, branch, and parent.
-   Never run two slices with overlapping write sets at once.
+   Spawn the whole wave in one message and wait for every agent in the
+   foreground: a turn that ends while an agent runs in the background ends
+   a headless session and orphans the agent. Never run two slices with
+   overlapping write sets at once.
 3. When an agent reports done, run
    `sh ${CLAUDE_SKILL_DIR}/scripts/release-worktree.sh <worktree> <NN>`: it
    copies the agent's `.verify/` evidence to `.verify/slices/NN/`, refuses a
