@@ -44,7 +44,7 @@ SOFTWARE.
 
 - URL: https://github.com/coderabbitai/skills.git
 - License: MIT
-- `coderabbitai-skills/review` at `main` (928c3b61f71b): local CodeRabbit CLI review and PR comment autofix for /factory:review and /factory:pr
+- `coderabbitai-skills/review` at `main` (a8777050c0d9): local CodeRabbit CLI review and PR comment autofix for /factory:review and /factory:pr
   - `skills/code-review`
   - `skills/autofix`
 
@@ -76,13 +76,13 @@ SOFTWARE.
 
 - URL: https://github.com/cursor/plugins.git
 - License: MIT
-- `cursor-plugins/deslop` at `main` (ccb5507cec15): remove AI slop from the diff for /factory:simplify
+- `cursor-plugins/deslop` at `main` (99b609a72323): remove AI slop from the diff for /factory:simplify
   - `cursor-team-kit/skills/deslop`
-- `cursor-plugins/pstack-playbooks` at `main` (ccb5507cec15): stacked PR rules, PR babysitting order, and evidence-boxed plans
+- `cursor-plugins/pstack-playbooks` at `main` (99b609a72323): stacked PR rules, PR babysitting order, and evidence-boxed plans
   - `pstack/skills/poteto-mode/playbooks/opening-a-pr.md`
   - `pstack/skills/poteto-mode/playbooks/babysit.md`
   - `pstack/skills/poteto-mode/playbooks/multi-phase-plan.md`
-- `cursor-plugins/pstack-principles` at `main` (ccb5507cec15): one-rule principles cited by /factory:implement and /factory:simplify
+- `cursor-plugins/pstack-principles` at `main` (99b609a72323): one-rule principles cited by /factory:implement and /factory:simplify
   - `pstack/skills/principle-prove-it-works`
   - `pstack/skills/principle-subtract-before-you-add`
   - `pstack/skills/principle-laziness-protocol`

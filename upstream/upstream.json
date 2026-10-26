@@ -42,20 +42,20 @@
     "coderabbitai-skills/review": {
       "repo": "coderabbitai/skills",
       "ref": "main",
-      "resolved": "928c3b61f71b578b1bcfbacc289f1446244dd9dd",
+      "resolved": "a8777050c0d9034d5de6beff3dfac9b43acb9854",
       "paths": [
         "skills/code-review",
         "skills/autofix"
       ],
       "license": "MIT",
       "licensePath": "LICENSE",
-      "hash": "sha256:f101edb77012911a2501b91e906893e1be6e1ef046b2c5999910ba189c4373c4",
+      "hash": "sha256:0589851b1f8065c3825efb1856b3da509d59922be7026a1bd9bad632be7836fc",
       "why": "local CodeRabbit CLI review and PR comment autofix for /factory:review and /factory:pr"
     },
     "cursor-plugins/deslop": {
       "repo": "cursor/plugins",
       "ref": "main",
-      "resolved": "ccb5507cec1546dc88135c1139c811e6c59115ba",
+      "resolved": "99b609a72323b70204eab407c622f436e858e112",
       "paths": [
         "cursor-team-kit/skills/deslop"
       ],
@@ -67,7 +67,7 @@
     "cursor-plugins/pstack-playbooks": {
       "repo": "cursor/plugins",
       "ref": "main",
-      "resolved": "ccb5507cec1546dc88135c1139c811e6c59115ba",
+      "resolved": "99b609a72323b70204eab407c622f436e858e112",
       "paths": [
         "pstack/skills/poteto-mode/playbooks/opening-a-pr.md",
         "pstack/skills/poteto-mode/playbooks/babysit.md",
@@ -75,13 +75,13 @@
       ],
       "license": "MIT",
       "licensePath": "pstack/LICENSE",
-      "hash": "sha256:70b385e2f7a1e9abc627cec2ac85f292175b746a6926ff8ea5cbbbf5202276ce",
+      "hash": "sha256:08ffede825f09beb7cbdfa239985154aada9b9f62ec09346c0c113ac903d79a0",
       "why": "stacked PR rules, PR babysitting order, and evidence-boxed plans"
     },
     "cursor-plugins/pstack-principles": {
       "repo": "cursor/plugins",
       "ref": "main",
-      "resolved": "ccb5507cec1546dc88135c1139c811e6c59115ba",
+      "resolved": "99b609a72323b70204eab407c622f436e858e112",
       "paths": [
         "pstack/skills/principle-prove-it-works",
         "pstack/skills/principle-subtract-before-you-add",
@@ -89,7 +89,7 @@
       ],
       "license": "MIT",
       "licensePath": "pstack/LICENSE",
-      "hash": "sha256:3a3e37b790fc1450e8a32de2138c7f33d27f731adafc7d24dc17a51cb4f21171",
+      "hash": "sha256:0937c2b8a5381428e290f46685994cdec7b171a1934fe25262adfc40675a938e",
       "why": "one-rule principles cited by /factory:implement and /factory:simplify"
     },
     "drew-simmons-lawbook/skill": {
